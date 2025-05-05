@@ -74,7 +74,7 @@ class Vector2(object):
             return True
         return False
 
-    def magnitudeSquared(self):
+    def magnitude_squared(self):
         """
         Compute the squared magnitude of the vector (faster than magnitude).
         :return: x² + y²
@@ -86,7 +86,7 @@ class Vector2(object):
         Compute the actual magnitude (length) of the vector.
         :return: √(x² + y²)
         """
-        return math.sqrt(self.magnitudeSquared())
+        return math.sqrt(self.magnitude_squared())
 
     def copy(self):
         """
@@ -95,14 +95,14 @@ class Vector2(object):
         """
         return Vector2(self.x, self.y)
 
-    def asTuple(self):
+    def as_tuple(self):
         """
         Represent the vector as a tuple of floats.
         :return: (x, y)
         """
         return self.x, self.y
 
-    def asInt(self):
+    def as_int(self):
         """
         Represent the vector as a tuple of integers (truncated).
         :return: (int(x), int(y))
