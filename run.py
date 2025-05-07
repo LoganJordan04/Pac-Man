@@ -1,50 +1,72 @@
 import pygame
 from pygame.locals import *
 from constants import *
+from pacman import Pacman
 
 
-# Define the main GameController class which manages the game lifecycle
+# Main game controller class: handles setup, input, updates, and rendering
 class GameController(object):
     def __init__(self):
         pygame.init()
 
-        # Create the game screen with the size specified in constants.py
+        # Create the main display surface using screen size defined in constants.py
         self.screen = pygame.display.set_mode(SCREENSIZE, 0, 32)
 
-        # Placeholder for background surface
+        # Surface used as the static background (e.g., maze backdrop)
         self.background = None
 
-    # Create a surface for the background and fill it with black
+        # Clock object to manage consistent frame rate and delta timing
+        self.clock = pygame.time.Clock()
+
+    # Creates a plain black background surface.
+    # This will eventually be replaced by the maze layout.
     def set_background(self):
         self.background = pygame.surface.Surface(SCREENSIZE).convert()
         self.background.fill(BLACK)
 
-    # Set up the initial background (more setup can be added later)
+    # Initializes game elements like background and player.
+    # Called once at the beginning.
     def start_game(self):
         self.set_background()
+        self.pacman = Pacman()
 
-    # Process input events and update the display every frame
+    # Core game loop logic: handles timing, input, updates, and rendering.
+    # Called every frame.
     def update(self):
+        # Get delta time (in seconds) based on 30 FPS
+        dt = self.clock.tick(30) / 1000.0
+
+        # Update Pac-Man's position
+        self.pacman.update(dt)
+
+        # Handle user inputs/events
         self.check_events()
+
+        # Redraw everything
         self.render()
 
-    # Poll for events, such as window close
+    # Checks for Pygame events such as closing the game window.
     def check_events(self):
         for event in pygame.event.get():
             if event.type == QUIT:
-                # Exit the game if the window is closed
+                # Exit when the user closes the window
                 exit()
 
-    # Refresh the screen to reflect any updates
+    # Handles all rendering to the screen: background, characters, etc.
     def render(self):
+        # Draw background and pacman
+        self.screen.blit(self.background, (0, 0))
+        self.pacman.render(self.screen)
+
+        # Push frame to display
         pygame.display.update()
 
 
-# Start the game if this script is run directly
+# Entry point for the game: creates and starts the main loop
 if __name__ == "__main__":
     game = GameController()
     game.start_game()
 
-    # Run the game loop indefinitely
+    # Main loop runs until manually exited
     while True:
         game.update()
