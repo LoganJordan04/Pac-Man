@@ -2,6 +2,7 @@ import pygame
 from pygame.locals import *
 from constants import *
 from pacman import Pacman
+from nodes import NodeGroup
 
 
 # Main game controller class: handles setup, input, updates, and rendering
@@ -28,7 +29,9 @@ class GameController(object):
     # Called once at the beginning.
     def start_game(self):
         self.set_background()
-        self.pacman = Pacman()
+        self.nodes = NodeGroup()
+        self.nodes.setup_test_nodes()
+        self.pacman = Pacman(self.nodes.nodeList[0])
 
     # Core game loop logic: handles timing, input, updates, and rendering.
     # Called every frame.
@@ -56,6 +59,7 @@ class GameController(object):
     def render(self):
         # Draw background and pacman
         self.screen.blit(self.background, (0, 0))
+        self.nodes.render(self.screen)
         self.pacman.render(self.screen)
 
         # Push frame to display

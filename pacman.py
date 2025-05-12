@@ -7,45 +7,38 @@ from constants import *
 # The main player class representing Pac-Man. Handles movement input,
 # position updating, and rendering the character on screen.
 class Pacman(object):
-    # Set character identity (useful for debugging or logic checks)
-    def __init__(self):
+    def __init__(self, node):
         self.name = PACMAN
 
-        # Initial position of Pac-Man (manually placed for starting point)
-        self.position = Vector2(200, 400)
-
-        # Dictionary mapping directions to vector representations
-        self.directions = {
-            # No movement
-            STOP: Vector2(),
-            # Move up
-            UP: Vector2(0, -1),
-            # Move down
-            DOWN: Vector2(0, 1),
-            # Move left
-            LEFT: Vector2(-1, 0),
-            # Move right
-            RIGHT: Vector2(1, 0)
-        }
-
-        # Start with no movement
+        self.directions = {STOP: Vector2(), UP: Vector2(0, -1), DOWN: Vector2(0, 1), LEFT: Vector2(-1, 0),
+                           RIGHT: Vector2(1, 0)}
         self.direction = STOP
-
-        # Speed of Pac-Man, scaled to tile width (default speed tuning)
         self.speed = 100 * TILEWIDTH / 16
-
-        # Radius of Pac-Man's drawn circle and color
         self.radius = 10
         self.color = YELLOW
+        self.node = node
+        self.set_position()
 
-    # Update Pac-Man's position and handle directional input.
+    def set_position(self):
+        self.position = self.node.position.copy()
+
     def update(self, dt):
-        # Move Pac-Man in the current direction by speed * delta_time
-        self.position += self.directions[self.direction] * self.speed * dt
-
-        # Get the latest valid key press and update movement direction
+        #self.position += self.directions[self.direction]*self.speed*dt
         direction = self.get_valid_key()
         self.direction = direction
+        self.node = self.get_new_target(direction)
+        self.set_position()
+
+    def valid_direction(self, direction):
+        if direction is not STOP:
+            if self.node.neighbors[direction] is not None:
+                return True
+        return False
+
+    def get_new_target(self, direction):
+        if self.valid_direction(direction):
+            return self.node.neighbors[direction]
+        return self.node
 
     # Checks for user key presses and returns a movement direction.
     def get_valid_key(self):
