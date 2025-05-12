@@ -2,6 +2,7 @@ import pygame
 from pygame.locals import *
 from constants import *
 from pacman import Pacman
+from nodes import NodeGroup
 
 
 # Main game controller class: handles setup, input, updates, and rendering
@@ -19,19 +20,23 @@ class GameController(object):
         self.clock = pygame.time.Clock()
 
     # Creates a plain black background surface.
-    # This will eventually be replaced by the maze layout.
+    # WILL BE REPLACED LATER
     def set_background(self):
         self.background = pygame.surface.Surface(SCREENSIZE).convert()
         self.background.fill(BLACK)
 
-    # Initializes game elements like background and player.
-    # Called once at the beginning.
+    # Initializes all game entities. Called once at launch.
+    # Sets up background, maze nodes, and places Pac-Man at a starting node.
     def start_game(self):
         self.set_background()
-        self.pacman = Pacman()
+        self.nodes = NodeGroup()
 
-    # Core game loop logic: handles timing, input, updates, and rendering.
-    # Called every frame.
+        # Creates a hardcoded sample node map
+        # WILL BE REPLACED LATER
+        self.nodes.setup_test_nodes()
+        self.pacman = Pacman(self.nodes.nodeList[0])
+
+    # Executes once per frame. Handles game timing, updates, input, and rendering.
     def update(self):
         # Get delta time (in seconds) based on 30 FPS
         dt = self.clock.tick(30) / 1000.0
@@ -56,6 +61,7 @@ class GameController(object):
     def render(self):
         # Draw background and pacman
         self.screen.blit(self.background, (0, 0))
+        self.nodes.render(self.screen)
         self.pacman.render(self.screen)
 
         # Push frame to display

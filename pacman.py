@@ -4,72 +4,134 @@ from vector import Vector2
 from constants import *
 
 
-# The main player class representing Pac-Man. Handles movement input,
-# position updating, and rendering the character on screen.
+# The main player class representing Pac-Man.
+# Handles movement between nodes, user input, and rendering.
 class Pacman(object):
-    # Set character identity (useful for debugging or logic checks)
-    def __init__(self):
+    def __init__(self, node):
         self.name = PACMAN
 
-        # Initial position of Pac-Man (manually placed for starting point)
-        self.position = Vector2(200, 400)
-
-        # Dictionary mapping directions to vector representations
+        # Direction vectors mapped to constants
         self.directions = {
-            # No movement
             STOP: Vector2(),
-            # Move up
             UP: Vector2(0, -1),
-            # Move down
             DOWN: Vector2(0, 1),
-            # Move left
             LEFT: Vector2(-1, 0),
-            # Move right
             RIGHT: Vector2(1, 0)
         }
 
-        # Start with no movement
+        # Initial movement direction
         self.direction = STOP
 
-        # Speed of Pac-Man, scaled to tile width (default speed tuning)
+        # Movement speed scaled to tile size
         self.speed = 100 * TILEWIDTH / 16
 
-        # Radius of Pac-Man's drawn circle and color
+        # Drawing Pac-Man
+        # WILL BE REPLACED LATER
         self.radius = 10
         self.color = YELLOW
 
-    # Update Pac-Man's position and handle directional input.
+        # Initialize position of Pac-Man
+        # Sets the current node and the target node Pac-Man is moving toward
+        self.node = node
+        self.set_position()
+        self.target = node
+
+    # Sets Pac-Man's pixel position to match the current node position.
+    def set_position(self):
+        self.position = self.node.position.copy()
+
+    # Called every frame to update Pac-Man's position and handle direction input.
+    # Uses delta time (dt) for frame-rate-independent movement.
     def update(self, dt):
-        # Move Pac-Man in the current direction by speed * delta_time
         self.position += self.directions[self.direction] * self.speed * dt
 
-        # Get the latest valid key press and update movement direction
+        # Get current input direction
         direction = self.get_valid_key()
-        self.direction = direction
 
-    # Checks for user key presses and returns a movement direction.
+        # Check if Pac-Man has passed the target node
+        if self.overshoot_target():
+            # Snap to target node
+            self.node = self.target
+
+            # Try new input direction
+            self.target = self.get_new_target(direction)
+
+            # If new input is valid, use it; otherwise keep going in current direction
+            if self.target is not self.node:
+                self.direction = direction
+            else:
+                self.target = self.get_new_target(self.direction)
+
+            # Stop if no valid target in current direction
+            if self.target is self.node:
+                self.direction = STOP
+
+            # Align Pac-Man to node
+            self.set_position()
+
+        else:
+            # Allow immediate reversal of direction if opposite is pressed
+            if self.opposite_direction(direction):
+                self.reverse_direction()
+
+    # Returns True if the given direction leads to a connected neighbor node.
+    def valid_direction(self, direction):
+        if direction is not STOP:
+            if self.node.neighbors[direction] is not None:
+                return True
+        return False
+
+    # Returns the neighbor node in the given direction if it's valid.
+    # If not valid, returns current node (i.e., no movement).
+    def get_new_target(self, direction):
+        if self.valid_direction(direction):
+            return self.node.neighbors[direction]
+        return self.node
+
+    # Returns a movement direction constant based on user key presses.
+    # Supports both arrow keys and WASD.
     def get_valid_key(self):
         key_pressed = pygame.key.get_pressed()
 
-        # Up arrow or W
         if key_pressed[K_UP] or key_pressed[K_w]:
             return UP
-        # Down arrow or S
         if key_pressed[K_DOWN] or key_pressed[K_s]:
             return DOWN
-        # Left arrow or A
         if key_pressed[K_LEFT] or key_pressed[K_a]:
             return LEFT
-        # Right arrow or D
         if key_pressed[K_RIGHT] or key_pressed[K_d]:
             return RIGHT
 
         return STOP
 
-    # Draw Pac-Man on the game screen.
+    # Draws Pac-Man on the screen as a yellow circle at his current position.
+    # WILL BE REPLACED LATER
     def render(self, screen):
-        # Convert float position to integer pixel coordinates
         p = self.position.as_int()
-
-        # Draw Pac-Man as a yellow circle
         pygame.draw.circle(screen, self.color, p, self.radius)
+
+    # Returns True if Pac-Man has moved past his target node.
+    # Helps snap him to the node and evaluate next movement choice.
+    def overshoot_target(self):
+        if self.target is not None:
+            vec1 = self.target.position - self.node.position
+            vec2 = self.position - self.node.position
+            node2Target = vec1.magnitude_squared()
+            node2Self = vec2.magnitude_squared()
+            return node2Self >= node2Target
+        return False
+
+    # Reverses Pac-Man’s movement by swapping current and target nodes and flipping the direction vector.
+    def reverse_direction(self):
+        self.direction *= -1
+        temp = self.node
+        self.node = self.target
+        self.target = temp
+
+    # Returns True if the given direction is exactly opposite the current direction.
+    # Used to allow quick reversals.
+    def opposite_direction(self, direction):
+        if direction is not STOP:
+            if direction == self.direction * -1:
+                return True
+        return False
