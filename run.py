@@ -72,3 +72,10 @@ if __name__ == "__main__":
     # Main loop runs until manually exited
     while True:
         game.update()
+
+def startGame(self):
+    self.setBackground()
+    self.nodes = NodeGroup("maze1.txt")
+    self.nodes.set_portal_pair((0,17), (27,17))
+    self.pacman = Pacman(self.nodes.get_start_tempNode())
+

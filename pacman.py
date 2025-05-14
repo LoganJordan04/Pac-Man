@@ -135,3 +135,7 @@ class Pacman(object):
             if direction == self.direction * -1:
                 return True
         return False
+
+    def render(self, screen):
+        p = self.position.as_int()
+        pygame.draw.circle(screen, self.color, p, self.radius)
