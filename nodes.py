@@ -1,84 +1,93 @@
 import pygame
 from vector import Vector2
 from constants import *
+import numpy as np
 
 
-# Represents a single intersection or junction in the maze.
-# Each node can connect to neighbors in UP, DOWN, LEFT, or RIGHT directions.
 class Node(object):
     def __init__(self, x, y):
-        # Position of the node on the screen (in pixels)
         self.position = Vector2(x, y)
+        self.neighbors = {UP: None, DOWN: None, LEFT: None, RIGHT: None}
 
-        # Dictionary of neighboring nodes, one for each direction
-        self.neighbors = {
-            UP: None,
-            DOWN: None,
-            LEFT: None,
-            RIGHT: None
-        }
-
-    # Draws the node and lines to its connected neighbors.
-    # WILL BE REPLACED LATER
     def render(self, screen):
-        for direction in self.neighbors.keys():
-            if self.neighbors[direction] is not None:
+        for n in self.neighbors.keys():
+            if self.neighbors[n] is not None:
                 line_start = self.position.as_tuple()
-                line_end = self.neighbors[direction].position.as_tuple()
-
-                # Draw a line from this node to the neighbor
+                line_end = self.neighbors[n].position.as_tuple()
                 pygame.draw.line(screen, WHITE, line_start, line_end, 4)
-
-                # Draw the node as a red circle
                 pygame.draw.circle(screen, RED, self.position.as_int(), 12)
 
 
-# A collection of all nodes in the maze.
-# Handles creation and rendering of the maze's path network.
 class NodeGroup(object):
-    def __init__(self):
-        self.nodeList = []
+    def __init__(self, level):
+        self.level = level
+        self.nodesLUT = {}
+        self.nodeSymbols = ['+']
+        self.pathSymbols = ['.']
+        data = self.read_maze_file(level)
+        self.create_node_table(data)
+        self.connect_horizontally(data)
+        self.connect_vertically(data)
 
-    # Creates a simple hardcoded test layout of nodes and their connections.
-    # WILL BE REPLACED LATER
-    def setup_test_nodes(self):
-        # Create nodes at specific coordinates
-        nodeA = Node(80 ,80)
-        nodeB = Node(160, 80)
-        nodeC = Node(80, 160)
-        nodeD = Node(160, 160)
-        nodeE = Node(208, 160)
-        nodeF = Node(80, 320)
-        nodeG = Node(208, 320)
+    def read_maze_file(self, textfile):
+        return np.loadtxt(textfile, dtype='<U1')
 
-        # Manually define neighbor connections between nodes
-        nodeA.neighbors[RIGHT] = nodeB
-        nodeA.neighbors[DOWN] = nodeC
+    def create_node_table(self, data, xoffset=0, yoffset=0):
+        for row in list(range(data.shape[0])):
+            for col in list(range(data.shape[1])):
+                if data[row][col] in self.nodeSymbols:
+                    x, y = self.construct_key(col + xoffset, row + yoffset)
+                    self.nodesLUT[(x, y)] = Node(x, y)
 
-        nodeB.neighbors[LEFT] = nodeA
-        nodeB.neighbors[DOWN] = nodeD
+    def construct_key(self, x, y):
+        return x * TILEWIDTH, y * TILEHEIGHT
 
-        nodeC.neighbors[UP] = nodeA
-        nodeC.neighbors[RIGHT] = nodeD
-        nodeC.neighbors[DOWN] = nodeF
+    def connect_horizontally(self, data, xoffset=0, yoffset=0):
+        for row in list(range(data.shape[0])):
+            key = None
+            for col in list(range(data.shape[1])):
+                if data[row][col] in self.nodeSymbols:
+                    if key is None:
+                        key = self.construct_key(col + xoffset, row + yoffset)
+                    else:
+                        otherkey = self.construct_key(col + xoffset, row + yoffset)
+                        self.nodesLUT[key].neighbors[RIGHT] = self.nodesLUT[otherkey]
+                        self.nodesLUT[otherkey].neighbors[LEFT] = self.nodesLUT[key]
+                        key = otherkey
+                elif data[row][col] not in self.pathSymbols:
+                    key = None
 
-        nodeD.neighbors[UP] = nodeB
-        nodeD.neighbors[LEFT] = nodeC
-        nodeD.neighbors[RIGHT] = nodeE
+    def connect_vertically(self, data, xoffset=0, yoffset=0):
+        dataT = data.transpose()
+        for col in list(range(dataT.shape[0])):
+            key = None
+            for row in list(range(dataT.shape[1])):
+                if dataT[col][row] in self.nodeSymbols:
+                    if key is None:
+                        key = self.construct_key(col + xoffset, row + yoffset)
+                    else:
+                        otherkey = self.construct_key(col + xoffset, row + yoffset)
+                        self.nodesLUT[key].neighbors[DOWN] = self.nodesLUT[otherkey]
+                        self.nodesLUT[otherkey].neighbors[UP] = self.nodesLUT[key]
+                        key = otherkey
+                elif dataT[col][row] not in self.pathSymbols:
+                    key = None
 
-        nodeE.neighbors[LEFT] = nodeD
-        nodeE.neighbors[DOWN] = nodeG
+    def get_node_from_pixels(self, xpixel, ypixel):
+        if (xpixel, ypixel) in self.nodesLUT.keys():
+            return self.nodesLUT[(xpixel, ypixel)]
+        return None
 
-        nodeF.neighbors[UP] = nodeC
-        nodeF.neighbors[RIGHT] = nodeG
+    def get_node_from_tiles(self, col, row):
+        x, y = self.construct_key(col, row)
+        if (x, y) in self.nodesLUT.keys():
+            return self.nodesLUT[(x, y)]
+        return None
 
-        nodeG.neighbors[UP] = nodeE
-        nodeG.neighbors[LEFT] = nodeF
+    def get_start_temp_node(self):
+        nodes = list(self.nodesLUT.values())
+        return nodes[0]
 
-        self.nodeList = [nodeA, nodeB, nodeC, nodeD, nodeE, nodeF, nodeG]
-
-    # Draws all nodes and their connections to the screen.
-    # WILL BE REPLACED LATER
     def render(self, screen):
-        for node in self.nodeList:
+        for node in self.nodesLUT.values():
             node.render(screen)

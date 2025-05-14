@@ -29,12 +29,8 @@ class GameController(object):
     # Sets up background, maze nodes, and places Pac-Man at a starting node.
     def start_game(self):
         self.set_background()
-        self.nodes = NodeGroup()
-
-        # Creates a hardcoded sample node map
-        # WILL BE REPLACED LATER
-        self.nodes.setup_test_nodes()
-        self.pacman = Pacman(self.nodes.nodeList[0])
+        self.nodes = NodeGroup("maze1.txt")
+        self.pacman = Pacman(self.nodes.get_start_temp_node())
 
     # Executes once per frame. Handles game timing, updates, input, and rendering.
     def update(self):
