@@ -7,15 +7,15 @@ import numpy as np
 class Node(object):
     def __init__(self, x, y):
         self.position = Vector2(x, y)
-        self.neighbors = {UP: None, DOWN: None, LEFT: None, RIGHT: None}
+        self.neighbors = {UP: None, DOWN: None, LEFT: None, RIGHT: None, PORTAL:None}
 
     def render(self, screen):
         for n in self.neighbors.keys():
             if self.neighbors[n] is not None:
                 line_start = self.position.as_tuple()
                 line_end = self.neighbors[n].position.as_tuple()
-                pygame.draw.line(screen, WHITE, line_start, line_end, 4)
-                pygame.draw.circle(screen, RED, self.position.as_int(), 12)
+                pygame.draw.line(screen, DARK_GRAY, line_start, line_end, 4)
+                pygame.draw.circle(screen, DARK_GRAY, self.position.as_int(), 12)
 
 
 class NodeGroup(object):
@@ -91,3 +91,10 @@ class NodeGroup(object):
     def render(self, screen):
         for node in self.nodesLUT.values():
             node.render(screen)
+
+    def set_portal_pair(self, pair1, pair2):
+        key1 = self.construct_key(*pair1)
+        key2 = self.construct_key(*pair2)
+        if key1 in self.nodesLUT.keys() and key2 in self.nodesLUT.keys():
+            self.nodesLUT[key1].neighbors[PORTAL] = self.nodesLUT[key2]
+            self.nodesLUT[key2].neighbors[PORTAL] = self.nodesLUT[key1]

@@ -26,10 +26,11 @@ class GameController(object):
         self.background.fill(BLACK)
 
     # Initializes all game entities. Called once at launch.
-    # Sets up background, maze nodes, and places Pac-Man at a starting node.
+    # Sets up background, maze nodes, portal locations, and places Pac-Man at a starting node.
     def start_game(self):
         self.set_background()
         self.nodes = NodeGroup("maze1.txt")
+        self.nodes.set_portal_pair((0, 17), (27, 17))
         self.pacman = Pacman(self.nodes.get_start_temp_node())
 
     # Executes once per frame. Handles game timing, updates, input, and rendering.

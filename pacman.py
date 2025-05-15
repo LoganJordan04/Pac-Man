@@ -53,6 +53,10 @@ class Pacman(object):
             # Snap to target node
             self.node = self.target
 
+            # If entering a portal, jump to the next node
+            if self.node.neighbors[PORTAL] is not None:
+                self.node = self.node.neighbors[PORTAL]
+
             # Try new input direction
             self.target = self.get_new_target(direction)
 
