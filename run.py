@@ -3,6 +3,7 @@ from pygame.locals import *
 from constants import *
 from pacman import Pacman
 from nodes import NodeGroup
+from pellets import PelletGroup
 
 
 # Main game controller class: handles setup, input, updates, and rendering
@@ -25,20 +26,36 @@ class GameController(object):
         self.background = pygame.surface.Surface(SCREENSIZE).convert()
         self.background.fill(BLACK)
 
-    # Initializes all game entities. Called once at launch.
-    # Sets up background, maze nodes, and places Pac-Man at a starting node.
+    # Called once at game start to initialize all game components.
+    # Loads node graph and portal locations, creates Pac-Man and pellet grid.
     def start_game(self):
         self.set_background()
+
+        # Load maze layout and create graph of nodes
         self.nodes = NodeGroup("maze1.txt")
+
+        # Set portal connections so Pac-Man and ghosts can teleport across the map
+        self.nodes.set_portal_pair((0, 17), (27, 17))
+
+        # Initialize Pac-Man at a temporary starting node (defined in node group)
         self.pacman = Pacman(self.nodes.get_start_temp_node())
+
+        # Load pellets based on maze layout
+        self.pellets = PelletGroup("maze1.txt")
 
     # Executes once per frame. Handles game timing, updates, input, and rendering.
     def update(self):
         # Get delta time (in seconds) based on 30 FPS
         dt = self.clock.tick(30) / 1000.0
 
-        # Update Pac-Man's position
+        # Update Pac-Man’s movement and animation
         self.pacman.update(dt)
+
+        # Animate and manage pellet flashing (e.g., power pellets)
+        self.pellets.update(dt)
+
+        # Handle pellet consumption and score tracking
+        self.check_pellet_events()
 
         # Handle user inputs/events
         self.check_events()
@@ -53,15 +70,24 @@ class GameController(object):
                 # Exit when the user closes the window
                 exit()
 
-    # Handles all rendering to the screen: background, characters, etc.
+    # Draws all game elements to the screen each frame:
+    # background, maze nodes, pellets, and Pac-Man.
     def render(self):
-        # Draw background and pacman
         self.screen.blit(self.background, (0, 0))
         self.nodes.render(self.screen)
+        self.pellets.render(self.screen)
         self.pacman.render(self.screen)
 
-        # Push frame to display
+        # Refresh the screen with the new frame
         pygame.display.update()
+
+    # Checks if Pac-Man has collided with a pellet and handles its removal.
+    # Updates the pellet counter.
+    def check_pellet_events(self):
+        pellet = self.pacman.eat_pellets(self.pellets.pelletList)
+        if pellet:
+            self.pellets.numEaten += 1
+            self.pellets.pelletList.remove(pellet)
 
 
 # Entry point for the game: creates and starts the main loop
