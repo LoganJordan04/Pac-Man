@@ -36,6 +36,9 @@ class Pacman(object):
         self.set_position()
         self.target = node
 
+        # Collision radius for detecting eaten pellets
+        self.collideRadius = 5
+
     # Sets Pac-Man's pixel position to match the current node position.
     def set_position(self):
         self.position = self.node.position.copy()
@@ -109,13 +112,13 @@ class Pacman(object):
         return STOP
 
     # Draws Pac-Man on the screen as a yellow circle at his current position.
-    # WILL BE REPLACED LATER
+    # WILL BE UPDATED LATER
     def render(self, screen):
         p = self.position.as_int()
         pygame.draw.circle(screen, self.color, p, self.radius)
 
     # Returns True if Pac-Man has moved past his target node.
-    # Helps snap him to the node and evaluate next movement choice.
+    # Prevents floating-point imprecision and ensures snapping to nodes.
     def overshoot_target(self):
         if self.target is not None:
             vec1 = self.target.position - self.node.position
@@ -139,3 +142,14 @@ class Pacman(object):
             if direction == self.direction * -1:
                 return True
         return False
+
+    # Checks if Pac-Man is colliding with any pellet in the given list.
+    # Returns the first pellet eaten (for removal and scoring).
+    def eat_pellets(self, pelletList):
+        for pellet in pelletList:
+            d = self.position - pellet.position
+            dSquared = d.magnitude_squared()
+            rSquared = (pellet.radius + self.collideRadius) ** 2
+            if dSquared <= rSquared:
+                return pellet
+        return None
