@@ -7,7 +7,7 @@ import numpy as np
 class Node(object):
     def __init__(self, x, y):
         self.position = Vector2(x, y)
-        self.neighbors = {UP: None, DOWN: None, LEFT: None, RIGHT: None, PORTAL:None}
+        self.neighbors = {UP: None, DOWN: None, LEFT: None, RIGHT: None, PORTAL: None}
 
     def render(self, screen):
         for n in self.neighbors.keys():
@@ -22,8 +22,8 @@ class NodeGroup(object):
     def __init__(self, level):
         self.level = level
         self.nodesLUT = {}
-        self.nodeSymbols = ['+']
-        self.pathSymbols = ['.']
+        self.nodeSymbols = ['+', 'P', 'n']
+        self.pathSymbols = ['.', '-', '|', 'p']
         data = self.read_maze_file(level)
         self.create_node_table(data)
         self.connect_horizontally(data)

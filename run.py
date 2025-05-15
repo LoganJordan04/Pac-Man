@@ -3,6 +3,7 @@ from pygame.locals import *
 from constants import *
 from pacman import Pacman
 from nodes import NodeGroup
+from pellets import PelletGroup
 
 
 # Main game controller class: handles setup, input, updates, and rendering
@@ -26,20 +27,22 @@ class GameController(object):
         self.background.fill(BLACK)
 
     # Initializes all game entities. Called once at launch.
-    # Sets up background, maze nodes, portal locations, and places Pac-Man at a starting node.
+    # Sets up background, maze nodes, portal locations, places Pac-Man at a starting node, and creates pellets.
     def start_game(self):
         self.set_background()
         self.nodes = NodeGroup("maze1.txt")
         self.nodes.set_portal_pair((0, 17), (27, 17))
         self.pacman = Pacman(self.nodes.get_start_temp_node())
+        self.pellets = PelletGroup("maze1.txt")
 
     # Executes once per frame. Handles game timing, updates, input, and rendering.
     def update(self):
         # Get delta time (in seconds) based on 30 FPS
         dt = self.clock.tick(30) / 1000.0
 
-        # Update Pac-Man's position
+        # Update Pac-Man's position and flash power pellets
         self.pacman.update(dt)
+        self.pellets.update(dt)
 
         # Handle user inputs/events
         self.check_events()
@@ -56,9 +59,10 @@ class GameController(object):
 
     # Handles all rendering to the screen: background, characters, etc.
     def render(self):
-        # Draw background and pacman
+        # Draw background, pacman, and pellets
         self.screen.blit(self.background, (0, 0))
         self.nodes.render(self.screen)
+        self.pellets.render(self.screen)
         self.pacman.render(self.screen)
 
         # Push frame to display
