@@ -17,12 +17,16 @@ class Entity(object):
         self.set_speed(100)
         self.radius = 10
         self.collideRadius = 5
-        self.color = WHITE
+        self.color = RED
         self.node = node
         self.set_position()
         self.target = node
         self.visible = True
         self.disablePortal = False
+
+        self.goal = None
+
+        self.directionMethod = self.random_direction
 
     def set_position(self):
         self.position = self.node.position.copy()
@@ -73,7 +77,7 @@ class Entity(object):
         if self.overshot_target():
             self.node = self.target
             directions = self.valid_directions()
-            direction = self.random_direction(directions)
+            direction = self.directionMethod(directions)
             if not self.disablePortal:
                 if self.node.neighbors[PORTAL] is not None:
                     self.node = self.node.neighbors[PORTAL]
