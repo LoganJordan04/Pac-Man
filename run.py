@@ -4,6 +4,7 @@ from constants import *
 from pacman import Pacman
 from nodes import NodeGroup
 from pellets import PelletGroup
+from ghosts import Ghost
 
 
 # Main game controller class: handles setup, input, updates, and rendering
@@ -43,13 +44,17 @@ class GameController(object):
         # Load pellets based on maze layout
         self.pellets = PelletGroup("maze1.txt")
 
+        # Initialize a ghost at the start node, with Pac-Man as its target for AI behavior
+        self.ghost = Ghost(self.nodes.get_start_temp_node(), self.pacman)
+
     # Executes once per frame. Handles game timing, updates, input, and rendering.
     def update(self):
         # Get delta time (in seconds) based on 30 FPS
         dt = self.clock.tick(30) / 1000.0
 
-        # Update Pac-Man’s movement and animation
+        # Update entity movement and animation
         self.pacman.update(dt)
+        self.ghost.update(dt)
 
         # Animate and manage pellet flashing (e.g., power pellets)
         self.pellets.update(dt)
@@ -71,12 +76,13 @@ class GameController(object):
                 exit()
 
     # Draws all game elements to the screen each frame:
-    # background, maze nodes, pellets, and Pac-Man.
+    # background, maze nodes, pellets, Pac-Man, and ghosts.
     def render(self):
         self.screen.blit(self.background, (0, 0))
         self.nodes.render(self.screen)
         self.pellets.render(self.screen)
         self.pacman.render(self.screen)
+        self.ghost.render(self.screen)
 
         # Refresh the screen with the new frame
         pygame.display.update()
