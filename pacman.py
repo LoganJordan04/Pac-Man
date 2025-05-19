@@ -38,7 +38,7 @@ class Pacman(Entity):
         self.set_position()
         self.target = node
 
-        # Collision radius for detecting eaten pellets
+        # Collision radius for detecting collisions
         self.collideRadius = 5
 
     # Sets Pac-Man's pixel position to match the current node position.
@@ -125,9 +125,7 @@ class Pacman(Entity):
         if self.target is not None:
             vec1 = self.target.position - self.node.position
             vec2 = self.position - self.node.position
-            node2Target = vec1.magnitude_squared()
-            node2Self = vec2.magnitude_squared()
-            return node2Self >= node2Target
+            return vec2.magnitude_squared() >= vec1.magnitude_squared()
         return False
 
     # Reverses Pac-Man’s movement by swapping current and target nodes and flipping the direction vector.

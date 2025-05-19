@@ -44,7 +44,8 @@ class GameController(object):
         # Load pellets based on maze layout
         self.pellets = PelletGroup("maze1.txt")
 
-        self.ghost = Ghost(self.nodes.get_start_temp_node())
+        # Initialize a ghost at the start node, with Pac-Man as its target for AI behavior
+        self.ghost = Ghost(self.nodes.get_start_temp_node(), self.pacman)
 
     # Executes once per frame. Handles game timing, updates, input, and rendering.
     def update(self):
