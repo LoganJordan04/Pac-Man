@@ -64,7 +64,7 @@ class Entity(object):
 
     def render(self, screen):
         if self.visible:
-            p = self.position.asInt()
+            p = self.position.as_int()
             pygame.draw.circle(screen, self.color, p, self.radius)
 
     def update(self, dt):
