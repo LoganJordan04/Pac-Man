@@ -2,12 +2,14 @@ import pygame
 from pygame.locals import *
 from vector import Vector2
 from constants import *
+from entity import Entity
 
 
 # The main player class representing Pac-Man.
 # Handles movement between nodes, user input, and rendering.
-class Pacman(object):
+class Pacman(Entity):
     def __init__(self, node):
+        Entity.__init__(self, node)
         self.name = PACMAN
 
         # Direction vectors mapped to constants
