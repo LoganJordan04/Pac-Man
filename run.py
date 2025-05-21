@@ -98,6 +98,8 @@ class GameController(object):
         if pellet:
             self.pellets.numEaten += 1
             self.pellets.pelletList.remove(pellet)
+            if pellet.name == POWERPELLET:
+                self.ghost.start_freight()
 
 
 # Entry point for the game: creates and starts the main loop

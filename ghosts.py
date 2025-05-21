@@ -62,3 +62,13 @@ class Ghost(Entity):
     # Chase mode: ghost actively pursues Pac-Man's current position.
     def chase(self):
         self.goal = self.pacman.position
+
+    def start_freight(self):
+        self.mode.set_freight_mode()
+        if self.mode.current == FREIGHT:
+            self.set_speed(50)
+            self.directionMethod = self.random_direction
+
+    def normal_mode(self):
+        self.set_speed(100)
+        self.directionMethod = self.goal_direction
