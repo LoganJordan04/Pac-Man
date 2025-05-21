@@ -38,6 +38,10 @@ class GameController(object):
         # Set portal connections so Pac-Man and ghosts can teleport across the map
         self.nodes.set_portal_pair((0, 17), (27, 17))
 
+        homekey = self.nodes.create_home_nodes(11.5, 14)
+        self.nodes.connect_home_nodes(homekey, (12, 14), LEFT)
+        self.nodes.connect_home_nodes(homekey, (15, 14), RIGHT)
+
         # Initialize Pac-Man at a temporary starting node (defined in node group)
         self.pacman = Pacman(self.nodes.get_start_temp_node())
 
@@ -46,6 +50,8 @@ class GameController(object):
 
         # Initialize a ghost at the start node, with Pac-Man as its target for AI behavior
         self.ghost = Ghost(self.nodes.get_start_temp_node(), self.pacman)
+
+        self.ghost.set_spawn_node(self.nodes.get_node_from_tiles(2 + 11.5, 3 + 14))
 
     # Executes once per frame. Handles game timing, updates, input, and rendering.
     def update(self):
@@ -62,11 +68,18 @@ class GameController(object):
         # Handle pellet consumption and score tracking
         self.check_pellet_events()
 
+        self.check_ghost_events()
+
         # Handle user inputs/events
         self.check_events()
 
         # Redraw everything
         self.render()
+
+    def check_ghost_events(self):
+        if self.pacman.collide_ghost(self.ghost):
+            if self.ghost.mode.current is FREIGHT:
+                self.ghost.start_spawn()
 
     # Checks for Pygame events such as closing the game window.
     def check_events(self):
@@ -94,6 +107,8 @@ class GameController(object):
         if pellet:
             self.pellets.numEaten += 1
             self.pellets.pelletList.remove(pellet)
+            if pellet.name == POWERPELLET:
+                self.ghost.start_freight()
 
 
 # Entry point for the game: creates and starts the main loop

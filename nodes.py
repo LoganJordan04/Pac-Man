@@ -51,6 +51,8 @@ class NodeGroup(object):
         self.connect_horizontally(data)
         self.connect_vertically(data)
 
+        self.homekey = None
+
     # Reads the maze layout from a text file as a NumPy array of characters.
     def read_maze_file(self, textfile):
         return np.loadtxt(textfile, dtype='<U1')
@@ -131,3 +133,21 @@ class NodeGroup(object):
         if key1 in self.nodesLUT.keys() and key2 in self.nodesLUT.keys():
             self.nodesLUT[key1].neighbors[PORTAL] = self.nodesLUT[key2]
             self.nodesLUT[key2].neighbors[PORTAL] = self.nodesLUT[key1]
+
+    def create_home_nodes(self, xoffset, yoffset):
+        homedata = np.array([['X', 'X', '+', 'X', 'X'],
+                             ['X', 'X', '.', 'X', 'X'],
+                             ['+', 'X', '.', 'X', '+'],
+                             ['+', '.', '+', '.', '+'],
+                             ['+', 'X', 'X', 'X', '+']])
+
+        self.create_node_table(homedata, xoffset, yoffset)
+        self.connect_horizontally(homedata, xoffset, yoffset)
+        self.connect_vertically(homedata, xoffset, yoffset)
+        self.homekey = self.construct_key(xoffset + 2, yoffset)
+        return self.homekey
+
+    def connect_home_nodes(self, homekey, otherkey, direction):
+        key = self.construct_key(*otherkey)
+        self.nodesLUT[homekey].neighbors[direction] = self.nodesLUT[key]
+        self.nodesLUT[key].neighbors[direction * -1] = self.nodesLUT[homekey]

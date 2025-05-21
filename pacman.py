@@ -147,9 +147,17 @@ class Pacman(Entity):
     # Returns the first pellet eaten (for removal and scoring).
     def eat_pellets(self, pelletList):
         for pellet in pelletList:
-            d = self.position - pellet.position
-            dSquared = d.magnitude_squared()
-            rSquared = (pellet.radius + self.collideRadius) ** 2
-            if dSquared <= rSquared:
+            if self.collide_check(pellet):
                 return pellet
         return None
+
+    def collide_ghost(self, ghost):
+        return self.collide_check(ghost)
+
+    def collide_check(self, other):
+        d = self.position - other.position
+        dSquared = d.magnitude_squared()
+        rSquared = (self.collideRadius + other.collideRadius) ** 2
+        if dSquared <= rSquared:
+            return True
+        return False
