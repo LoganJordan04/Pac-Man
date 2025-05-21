@@ -51,6 +51,8 @@ class GameController(object):
         # Initialize a ghost at the start node, with Pac-Man as its target for AI behavior
         self.ghost = Ghost(self.nodes.get_start_temp_node(), self.pacman)
 
+        self.ghost.set_spawn_node(self.nodes.get_node_from_tiles(2 + 11.5, 3 + 14))
+
     # Executes once per frame. Handles game timing, updates, input, and rendering.
     def update(self):
         # Get delta time (in seconds) based on 30 FPS
@@ -66,11 +68,18 @@ class GameController(object):
         # Handle pellet consumption and score tracking
         self.check_pellet_events()
 
+        self.check_ghost_events()
+
         # Handle user inputs/events
         self.check_events()
 
         # Redraw everything
         self.render()
+
+    def check_ghost_events(self):
+        if self.pacman.collide_ghost(self.ghost):
+            if self.ghost.mode.current is FREIGHT:
+                self.ghost.start_spawn()
 
     # Checks for Pygame events such as closing the game window.
     def check_events(self):
