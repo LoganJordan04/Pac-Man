@@ -38,6 +38,10 @@ class GameController(object):
         # Set portal connections so Pac-Man and ghosts can teleport across the map
         self.nodes.set_portal_pair((0, 17), (27, 17))
 
+        homekey = self.nodes.create_home_nodes(11.5, 14)
+        self.nodes.connect_home_nodes(homekey, (12, 14), LEFT)
+        self.nodes.connect_home_nodes(homekey, (15, 14), RIGHT)
+
         # Initialize Pac-Man at a temporary starting node (defined in node group)
         self.pacman = Pacman(self.nodes.get_start_temp_node())
 
