@@ -30,12 +30,6 @@ class Entity(object):
         self.radius = 10
         self.color = RED
 
-        # Initialize position of entity
-        # Sets the current node and the target node entity is moving toward
-        self.node = node
-        self.set_position()
-        self.target = node
-
         # Collision radius for detecting collisions
         self.collideRadius = 5
 
@@ -48,6 +42,9 @@ class Entity(object):
 
         # Direction decision logic (default is random)
         self.directionMethod = self.random_direction
+
+        # Initialize position and node tracking
+        self.set_start_node(node)
 
     # Align entity's pixel position to its current node position.
     def set_position(self):
@@ -90,7 +87,7 @@ class Entity(object):
     def set_speed(self, speed):
         self.speed = speed * TILEWIDTH / 16
 
-    # Render the entity as a colored circle/
+    # Render the entity as a colored circle
     # WILL BE UPDATED LATER
     def render(self, screen):
         if self.visible:
@@ -119,6 +116,7 @@ class Entity(object):
             if self.target is not self.node:
                 self.direction = direction
             else:
+                # If stuck, keep trying the same direction
                 self.target = self.get_new_target(self.direction)
 
             # Snap to node to avoid floating point drift
@@ -140,3 +138,10 @@ class Entity(object):
     # Default direction strategy: randomly choose one from the available directions.
     def random_direction(self, directions):
         return directions[randint(0, len(directions) - 1)]
+
+    # Initializes the entity's starting node, target, and position.
+    def set_start_node(self, node):
+        self.node = node
+        self.startNode = node
+        self.target = node
+        self.set_position()

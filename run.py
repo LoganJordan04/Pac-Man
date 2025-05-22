@@ -18,7 +18,7 @@ class GameController(object):
         # Surface used as the static background (e.g., maze backdrop)
         self.background = None
 
-        # Clock object to manage consistent frame rate and delta timing
+        # Clock to manage time between frames and limit frame rate
         self.clock = pygame.time.Clock()
 
     # Creates a plain black background surface.
@@ -27,52 +27,62 @@ class GameController(object):
         self.background = pygame.surface.Surface(SCREENSIZE).convert()
         self.background.fill(BLACK)
 
-    # Called once at game start to initialize all game components.
-    # Loads node graph and portal locations, creates Pac-Man and pellet grid.
+    # Called once at game start. Initializes maze, Pac-Man, ghosts, and pellets.
+    # Loads the maze from file, places all entities, and sets up portals and ghost house.
     def start_game(self):
         self.set_background()
 
         # Load maze layout and create graph of nodes
         self.nodes = NodeGroup("maze1.txt")
 
-        # Set portal connections so Pac-Man and ghosts can teleport across the map
+        # Link left and right edge nodes as teleport portals
         self.nodes.set_portal_pair((0, 17), (27, 17))
 
+        # Create and connect nodes for the ghost house in the maze
         homekey = self.nodes.create_home_nodes(11.5, 14)
         self.nodes.connect_home_nodes(homekey, (12, 14), LEFT)
         self.nodes.connect_home_nodes(homekey, (15, 14), RIGHT)
 
-        # Initialize Pac-Man at a temporary starting node (defined in node group)
-        self.pacman = Pacman(self.nodes.get_start_temp_node())
+        # Initialize Pac-Man at a specific node
+        self.pacman = Pacman(self.nodes.get_node_from_tiles(15, 26))
 
         # Load pellets based on maze layout
         self.pellets = PelletGroup("maze1.txt")
 
+        # Initialize all four ghosts and assign starting positions
         self.ghosts = GhostGroup(self.nodes.get_start_temp_node(), self.pacman)
 
+        self.ghosts.blinky.set_start_node(self.nodes.get_node_from_tiles(2 + 11.5, 0 + 14))
+        self.ghosts.pinky.set_start_node(self.nodes.get_node_from_tiles(2 + 11.5, 3 + 14))
+        self.ghosts.inky.set_start_node(self.nodes.get_node_from_tiles(0 + 11.5, 3 + 14))
+        self.ghosts.clyde.set_start_node(self.nodes.get_node_from_tiles(4 + 11.5, 3 + 14))
+
+        # Set spawn target (ghost house center) for ghosts when eaten
         self.ghosts.set_spawn_node(self.nodes.get_node_from_tiles(2+11.5, 3+14))
 
-    # Executes once per frame. Handles game timing, updates, input, and rendering.
+    # Runs once per frame. Updates game state, handles events, checks collisions,
+    # and draws everything to the screen.
     def update(self):
-        # Get delta time (in seconds) based on 30 FPS
+        # Delta time in seconds (30 FPS)
         dt = self.clock.tick(30) / 1000.0
 
         # Update entity movement and animation
         self.pacman.update(dt)
         self.ghosts.update(dt)
 
-        # Animate and manage pellet flashing (e.g., power pellets)
+        # Animate flashing pellets (power pellets)
         self.pellets.update(dt)
 
         # Handle pellet consumption and score tracking
         self.check_pellet_events()
 
+        # Handle ghost collisions and mode logic
         self.check_ghost_events()
 
-        # Handle user inputs/events
+        # Handle user inputs or system quit events
         self.check_events()
 
-        # Redraw everything
+        # Draw updated frame to screen
         self.render()
 
     # Checks for Pygame events such as closing the game window.
@@ -82,14 +92,16 @@ class GameController(object):
                 # Exit when the user closes the window
                 exit()
 
+    # Detect collisions between Pac-Man and ghosts.
+    # If a ghost is in freight mode, send it back to the ghost house (spawn mode).
     def check_ghost_events(self):
         for ghost in self.ghosts:
             if self.pacman.collide_ghost(ghost):
                 if ghost.mode.current is FREIGHT:
                     ghost.start_spawn()
 
-    # Checks if Pac-Man has collided with a pellet and handles its removal.
-    # Updates the pellet counter.
+    # Detects if Pac-Man has eaten a pellet.
+    # Removes pellet, increments counter, and triggers ghost freight mode if it's a power pellet.
     def check_pellet_events(self):
         pellet = self.pacman.eat_pellets(self.pellets.pelletList)
         if pellet:

@@ -8,6 +8,7 @@ import numpy as np
 # Each node knows its neighboring nodes in the four directions and portals.
 class Node(object):
     def __init__(self, x, y):
+        # Pixel-based position of the node
         self.position = Vector2(x, y)
 
         # Dictionary of connections to neighboring nodes
@@ -51,6 +52,7 @@ class NodeGroup(object):
         self.connect_horizontally(data)
         self.connect_vertically(data)
 
+        # Center of ghost house
         self.homekey = None
 
     # Reads the maze layout from a text file as a NumPy array of characters.
@@ -73,9 +75,9 @@ class NodeGroup(object):
     # Connects nodes to their horizontal neighbors by scanning rows.
     # Only creates connections across valid path or node symbols.
     def connect_horizontally(self, data, xoffset=0, yoffset=0):
-        for row in list(range(data.shape[0])):
+        for row in range(data.shape[0]):
             key = None
-            for col in list(range(data.shape[1])):
+            for col in range(data.shape[1]):
                 if data[row][col] in self.nodeSymbols:
                     if key is None:
                         key = self.construct_key(col + xoffset, row + yoffset)
@@ -92,9 +94,9 @@ class NodeGroup(object):
     # Similar to horizontal connection logic, but transposed.
     def connect_vertically(self, data, xoffset=0, yoffset=0):
         dataT = data.transpose()
-        for col in list(range(dataT.shape[0])):
+        for col in range(dataT.shape[0]):
             key = None
-            for row in list(range(dataT.shape[1])):
+            for row in range(dataT.shape[1]):
                 if dataT[col][row] in self.nodeSymbols:
                     if key is None:
                         key = self.construct_key(col + xoffset, row + yoffset)
@@ -130,23 +132,29 @@ class NodeGroup(object):
     def set_portal_pair(self, pair1, pair2):
         key1 = self.construct_key(*pair1)
         key2 = self.construct_key(*pair2)
-        if key1 in self.nodesLUT.keys() and key2 in self.nodesLUT.keys():
+        if key1 in self.nodesLUT and key2 in self.nodesLUT:
             self.nodesLUT[key1].neighbors[PORTAL] = self.nodesLUT[key2]
             self.nodesLUT[key2].neighbors[PORTAL] = self.nodesLUT[key1]
 
+    # Creates the ghost house (where ghosts start and return after being eaten)
     def create_home_nodes(self, xoffset, yoffset):
-        homedata = np.array([['X', 'X', '+', 'X', 'X'],
-                             ['X', 'X', '.', 'X', 'X'],
-                             ['+', 'X', '.', 'X', '+'],
-                             ['+', '.', '+', '.', '+'],
-                             ['+', 'X', 'X', 'X', '+']])
+        homedata = np.array([
+            ['X', 'X', '+', 'X', 'X'],
+            ['X', 'X', '.', 'X', 'X'],
+            ['+', 'X', '.', 'X', '+'],
+            ['+', '.', '+', '.', '+'],
+            ['+', 'X', 'X', 'X', '+']
+        ])
 
         self.create_node_table(homedata, xoffset, yoffset)
         self.connect_horizontally(homedata, xoffset, yoffset)
         self.connect_vertically(homedata, xoffset, yoffset)
+
+        # Return the center node of the ghost house
         self.homekey = self.construct_key(xoffset + 2, yoffset)
         return self.homekey
 
+    # Connects the ghost house to the maze
     def connect_home_nodes(self, homekey, otherkey, direction):
         key = self.construct_key(*otherkey)
         self.nodesLUT[homekey].neighbors[direction] = self.nodesLUT[key]

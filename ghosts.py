@@ -29,8 +29,11 @@ class Ghost(Entity):
         # Controls modes
         self.mode = ModeController(self)
 
-        self.blinky = blinky
+        # Starting position of the ghost
         self.homeNode = node
+
+        # Optional reference to Blinky (used by Inky)
+        self.blinky = blinky
 
     # Chooses the direction that brings the ghost closest to its current goal.
     # Compares squared distances to avoid expensive square roots.
@@ -66,22 +69,27 @@ class Ghost(Entity):
     def chase(self):
         self.goal = self.pacman.position
 
+    # Enter freight mode where ghost runs away and becomes vulnerable
     def start_freight(self):
         self.mode.set_freight_mode()
         if self.mode.current == FREIGHT:
             self.set_speed(50)
             self.directionMethod = self.random_direction
 
+    # Return to normal speed and chasing logic after freight ends
     def normal_mode(self):
         self.set_speed(100)
         self.directionMethod = self.goal_direction
 
+    # Target the spawn location (used after being eaten)
     def spawn(self):
         self.goal = self.spawnNode.position
 
+    # Assign a spawn location node
     def set_spawn_node(self, node):
         self.spawnNode = node
 
+    # Begin spawn mode (returning to base after being eaten)
     def start_spawn(self):
         self.mode.set_spawn_mode()
         if self.mode.current == SPAWN:
@@ -90,6 +98,7 @@ class Ghost(Entity):
             self.spawn()
 
 
+# Blinky always targets Pac-Man directly during chase
 class Blinky(Ghost):
     def __init__(self, node, pacman=None, blinky=None):
         Ghost.__init__(self, node, pacman, blinky)
@@ -97,6 +106,7 @@ class Blinky(Ghost):
         self.color = RED
 
 
+# Pinky targets 4 tiles ahead of Pac-Man
 class Pinky(Ghost):
     def __init__(self, node, pacman=None, blinky=None):
         Ghost.__init__(self, node, pacman, blinky)
@@ -110,6 +120,7 @@ class Pinky(Ghost):
         self.goal = self.pacman.position + self.pacman.directions[self.pacman.direction] * TILEWIDTH * 4
 
 
+# Inky uses a vector from Blinky to a point 2 tiles ahead of Pac-Man, then doubles it
 class Inky(Ghost):
     def __init__(self, node, pacman=None, blinky=None):
         Ghost.__init__(self, node, pacman, blinky)
@@ -125,6 +136,7 @@ class Inky(Ghost):
         self.goal = self.blinky.position + vec2
 
 
+# Clyde chases Pac-Man unless he’s close, then runs to the corner
 class Clyde(Ghost):
     def __init__(self, node, pacman=None, blinky=None):
         Ghost.__init__(self, node, pacman, blinky)
@@ -143,6 +155,7 @@ class Clyde(Ghost):
             self.goal = self.pacman.position + self.pacman.directions[self.pacman.direction] * TILEWIDTH * 4
 
 
+# Manages all four ghosts and their collective behavior
 class GhostGroup(object):
     def __init__(self, node, pacman):
         self.blinky = Blinky(node, pacman)
@@ -169,6 +182,7 @@ class GhostGroup(object):
 
     def update_points(self):
         for ghost in self:
+            # Each successive ghost is worth double
             ghost.points *= 2
 
     def reset_points(self):

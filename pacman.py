@@ -9,7 +9,7 @@ from entity import Entity
 # Handles movement between nodes, user input, and rendering.
 class Pacman(Entity):
     def __init__(self, node):
-        Entity.__init__(self, node)
+        super().__init__(node)
         self.name = PACMAN
 
         # Direction vectors mapped to constants
@@ -21,10 +21,8 @@ class Pacman(Entity):
             RIGHT: Vector2(1, 0)
         }
 
-        # Initial movement direction
-        self.direction = STOP
-
-        # Movement speed scaled to tile size
+        # Default movement direction and speed
+        self.direction = LEFT
         self.speed = 100 * TILEWIDTH / 16
 
         # Drawing Pac-Man
@@ -38,7 +36,7 @@ class Pacman(Entity):
         self.set_position()
         self.target = node
 
-        # Collision radius for detecting collisions
+        # Collision radius used for interacting with pellets and ghosts
         self.collideRadius = 5
 
     # Sets Pac-Man's pixel position to match the current node position.
@@ -85,10 +83,7 @@ class Pacman(Entity):
 
     # Returns True if the given direction leads to a connected neighbor node.
     def valid_direction(self, direction):
-        if direction is not STOP:
-            if self.node.neighbors[direction] is not None:
-                return True
-        return False
+        return direction is not STOP and self.node.neighbors[direction] is not None
 
     # Returns the neighbor node in the given direction if it's valid.
     # If not valid, returns current node (i.e., no movement).
@@ -138,10 +133,7 @@ class Pacman(Entity):
     # Returns True if the given direction is exactly opposite the current direction.
     # Used to allow quick reversals.
     def opposite_direction(self, direction):
-        if direction is not STOP:
-            if direction == self.direction * -1:
-                return True
-        return False
+        return direction is not STOP and direction == self.direction * -1
 
     # Checks if Pac-Man is colliding with any pellet in the given list.
     # Returns the first pellet eaten (for removal and scoring).
@@ -151,9 +143,11 @@ class Pacman(Entity):
                 return pellet
         return None
 
+    # Check for a collision between Pac-Man and a ghost.
     def collide_ghost(self, ghost):
         return self.collide_check(ghost)
 
+    # Performs a circular collision check between Pac-Man and another entity (pellet or ghost).
     def collide_check(self, other):
         d = self.position - other.position
         dSquared = d.magnitude_squared()
