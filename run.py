@@ -4,7 +4,7 @@ from constants import *
 from pacman import Pacman
 from nodes import NodeGroup
 from pellets import PelletGroup
-from ghosts import Ghost
+from ghosts import GhostGroup
 
 
 # Main game controller class: handles setup, input, updates, and rendering
@@ -48,10 +48,9 @@ class GameController(object):
         # Load pellets based on maze layout
         self.pellets = PelletGroup("maze1.txt")
 
-        # Initialize a ghost at the start node, with Pac-Man as its target for AI behavior
-        self.ghost = Ghost(self.nodes.get_start_temp_node(), self.pacman)
+        self.ghosts = GhostGroup(self.nodes.get_start_temp_node(), self.pacman)
 
-        self.ghost.set_spawn_node(self.nodes.get_node_from_tiles(2 + 11.5, 3 + 14))
+        self.ghosts.set_spawn_node(self.nodes.get_node_from_tiles(2+11.5, 3+14))
 
     # Executes once per frame. Handles game timing, updates, input, and rendering.
     def update(self):
@@ -60,7 +59,7 @@ class GameController(object):
 
         # Update entity movement and animation
         self.pacman.update(dt)
-        self.ghost.update(dt)
+        self.ghosts.update(dt)
 
         # Animate and manage pellet flashing (e.g., power pellets)
         self.pellets.update(dt)
@@ -76,11 +75,6 @@ class GameController(object):
         # Redraw everything
         self.render()
 
-    def check_ghost_events(self):
-        if self.pacman.collide_ghost(self.ghost):
-            if self.ghost.mode.current is FREIGHT:
-                self.ghost.start_spawn()
-
     # Checks for Pygame events such as closing the game window.
     def check_events(self):
         for event in pygame.event.get():
@@ -88,17 +82,11 @@ class GameController(object):
                 # Exit when the user closes the window
                 exit()
 
-    # Draws all game elements to the screen each frame:
-    # background, maze nodes, pellets, Pac-Man, and ghosts.
-    def render(self):
-        self.screen.blit(self.background, (0, 0))
-        self.nodes.render(self.screen)
-        self.pellets.render(self.screen)
-        self.pacman.render(self.screen)
-        self.ghost.render(self.screen)
-
-        # Refresh the screen with the new frame
-        pygame.display.update()
+    def check_ghost_events(self):
+        for ghost in self.ghosts:
+            if self.pacman.collide_ghost(ghost):
+                if ghost.mode.current is FREIGHT:
+                    ghost.start_spawn()
 
     # Checks if Pac-Man has collided with a pellet and handles its removal.
     # Updates the pellet counter.
@@ -108,7 +96,19 @@ class GameController(object):
             self.pellets.numEaten += 1
             self.pellets.pelletList.remove(pellet)
             if pellet.name == POWERPELLET:
-                self.ghost.start_freight()
+                self.ghosts.start_freight()
+
+    # Draws all game elements to the screen each frame:
+    # background, maze nodes, pellets, Pac-Man, and ghosts.
+    def render(self):
+        self.screen.blit(self.background, (0, 0))
+        self.nodes.render(self.screen)
+        self.pellets.render(self.screen)
+        self.pacman.render(self.screen)
+        self.ghosts.render(self.screen)
+
+        # Refresh the screen with the new frame
+        pygame.display.update()
 
 
 # Entry point for the game: creates and starts the main loop
