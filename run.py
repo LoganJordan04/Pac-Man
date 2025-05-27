@@ -27,6 +27,14 @@ class GameController(object):
 
         self.pause = Pause(True)
 
+        self.level = 0
+
+    def next_level(self):
+        self.show_entities()
+        self.level += 1
+        self.pause.paused = True
+        self.start_game()
+
     # Creates a plain black background surface.
     # WILL BE REPLACED LATER
     def set_background(self):
@@ -110,7 +118,7 @@ class GameController(object):
                 if ghost.mode.current is FREIGHT:
                     self.pacman.visible = False
                     ghost.visible = False
-                    self.pause.set_pause(pauseTime=1, func=self.showEntities)
+                    self.pause.set_pause(pauseTime=1, func=self.show_entities)
                     ghost.start_spawn()
 
     def show_entities(self):
@@ -130,6 +138,9 @@ class GameController(object):
             self.pellets.pelletList.remove(pellet)
             if pellet.name == POWERPELLET:
                 self.ghosts.start_freight()
+            if self.pellets.is_empty():
+                self.hide_entities()
+                self.pause.set_pause(pauseTime=3, func=self.next_level)
 
     def check_fruit_events(self):
         if self.pellets.numEaten == 50 or self.pellets.numEaten == 140:
