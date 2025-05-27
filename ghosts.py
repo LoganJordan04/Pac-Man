@@ -35,6 +35,7 @@ class Ghost(Entity):
         # Optional reference to Blinky (used by Inky)
         self.blinky = blinky
 
+    # Resets the ghost to its default behavior and appearance after level restart.
     def reset(self):
         Entity.reset(self)
         self.points = 200

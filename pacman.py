@@ -25,6 +25,7 @@ class Pacman(Entity):
         self.direction = LEFT
         self.speed = 100 * TILEWIDTH / 16
 
+        # Start Pac-Man between current node and neighbor in the given direction
         self.set_between_nodes(LEFT)
 
         # Drawing Pac-Man
@@ -41,14 +42,17 @@ class Pacman(Entity):
         # Collision radius used for interacting with pellets and ghosts
         self.collideRadius = 5
 
+        # Flag indicating if Pac-Man is alive
         self.alive = True
 
+    # Resets Pac-Man to the starting state (after death or level reset).
     def reset(self):
         Entity.reset(self)
         self.direction = LEFT
         self.set_between_nodes(LEFT)
         self.alive = True
 
+    # Handles Pac-Man's death by stopping movement and marking him as not alive.
     def die(self):
         self.alive = False
         self.direction = STOP

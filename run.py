@@ -9,7 +9,7 @@ from fruit import Fruit
 from pauser import Pause
 
 
-# Main game controller class: handles setup, input, updates, and rendering
+# Main game controller class: handles setup, updates, input, collisions, and rendering
 class GameController(object):
     def __init__(self):
         pygame.init()
@@ -23,20 +23,25 @@ class GameController(object):
         # Clock to manage time between frames and limit frame rate
         self.clock = pygame.time.Clock()
 
+        # Bonus fruit object (appears temporarily)
         self.fruit = None
 
+        # Pause manager for delays and manual pauses
         self.pause = Pause(True)
 
+        # Current level and remaining lives
         self.level = 0
-
         self.lives = 5
 
+    # Called when all pellets are eaten.
+    # Advances to the next level and resets game entities.
     def next_level(self):
         self.show_entities()
         self.level += 1
         self.pause.paused = True
         self.start_game()
 
+    # Restarts the game from level 0 with full lives after game over.
     def restart_game(self):
         self.lives = 5
         self.level = 0
@@ -44,6 +49,7 @@ class GameController(object):
         self.fruit = None
         self.start_game()
 
+    # Resets the current level after a player death (if lives remain).
     def reset_level(self):
         self.pause.paused = True
         self.pacman.reset()
@@ -112,6 +118,7 @@ class GameController(object):
             # Handle ghost collisions and mode logic
             self.check_ghost_events()
 
+            # Handle fruit consumption and spawning
             self.check_fruit_events()
 
         afterPauseMethod = self.pause.update(dt)
@@ -145,10 +152,12 @@ class GameController(object):
                         else:
                             self.pause.set_pause(pauseTime=3, func=self.reset_level)
 
+    # Makes Pac-Man and ghosts visible again (e.g., after a pause).
     def show_entities(self):
         self.pacman.visible = True
         self.ghosts.show()
 
+    #  Hides Pac-Man and ghosts (used after collision).
     def hide_entities(self):
         self.pacman.visible = False
         self.ghosts.hide()
@@ -166,14 +175,14 @@ class GameController(object):
                 self.hide_entities()
                 self.pause.set_pause(pauseTime=3, func=self.next_level)
 
+    # Controls fruit appearance and collision with Pac-Man.
+    # Fruit appears after eating 50 or 140 pellets.
     def check_fruit_events(self):
-        if self.pellets.numEaten == 50 or self.pellets.numEaten == 140:
-            if self.fruit is None:
-                self.fruit = Fruit(self.nodes.get_node_from_tiles(9, 20))
+        if self.pellets.numEaten in [50, 140] and self.fruit is None:
+            self.fruit = Fruit(self.nodes.get_node_from_tiles(9, 20))
+
         if self.fruit is not None:
-            if self.pacman.collide_check(self.fruit):
-                self.fruit = None
-            elif self.fruit.destroy:
+            if self.pacman.collide_check(self.fruit) or self.fruit.destroy:
                 self.fruit = None
 
     # Checks for Pygame events such as closing the game window.
@@ -182,6 +191,7 @@ class GameController(object):
             if event.type == QUIT:
                 # Exit when the user closes the window
                 exit()
+
             elif event.type == KEYDOWN:
                 if event.key == K_SPACE:
                     if self.pacman.alive:
@@ -192,7 +202,7 @@ class GameController(object):
                             self.hide_entities()
 
     # Draws all game elements to the screen each frame:
-    # background, maze nodes, pellets, fruit, Pac-Man, and ghosts.
+    # background, maze, pellets, fruit, Pac-Man, and ghosts.
     def render(self):
         self.screen.blit(self.background, (0, 0))
         self.nodes.render(self.screen)
