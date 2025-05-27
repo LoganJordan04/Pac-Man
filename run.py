@@ -5,6 +5,7 @@ from pacman import Pacman
 from nodes import NodeGroup
 from pellets import PelletGroup
 from ghosts import GhostGroup
+from fruit import Fruit
 
 
 # Main game controller class: handles setup, input, updates, and rendering
@@ -20,6 +21,8 @@ class GameController(object):
 
         # Clock to manage time between frames and limit frame rate
         self.clock = pygame.time.Clock()
+
+        self.fruit = None
 
     # Creates a plain black background surface.
     # WILL BE REPLACED LATER
@@ -73,11 +76,16 @@ class GameController(object):
         # Animate flashing pellets (power pellets)
         self.pellets.update(dt)
 
+        if self.fruit is not None:
+            self.fruit.update(dt)
+
         # Handle pellet consumption and score tracking
         self.check_pellet_events()
 
         # Handle ghost collisions and mode logic
         self.check_ghost_events()
+
+        self.check_fruit_events()
 
         # Handle user inputs or system quit events
         self.check_events()
@@ -85,12 +93,6 @@ class GameController(object):
         # Draw updated frame to screen
         self.render()
 
-    # Checks for Pygame events such as closing the game window.
-    def check_events(self):
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                # Exit when the user closes the window
-                exit()
 
     # Detect collisions between Pac-Man and ghosts.
     # If a ghost is in freight mode, send it back to the ghost house (spawn mode).
@@ -110,12 +112,31 @@ class GameController(object):
             if pellet.name == POWERPELLET:
                 self.ghosts.start_freight()
 
+    def check_fruit_events(self):
+        if self.pellets.numEaten == 50 or self.pellets.numEaten == 140:
+            if self.fruit is None:
+                self.fruit = Fruit(self.nodes.get_node_from_tiles(9, 20))
+        if self.fruit is not None:
+            if self.pacman.collide_check(self.fruit):
+                self.fruit = None
+            elif self.fruit.destroy:
+                self.fruit = None
+
+    # Checks for Pygame events such as closing the game window.
+    def check_events(self):
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                # Exit when the user closes the window
+                exit()
+
     # Draws all game elements to the screen each frame:
-    # background, maze nodes, pellets, Pac-Man, and ghosts.
+    # background, maze nodes, pellets, fruit, Pac-Man, and ghosts.
     def render(self):
         self.screen.blit(self.background, (0, 0))
         self.nodes.render(self.screen)
         self.pellets.render(self.screen)
+        if self.fruit is not None:
+            self.fruit.render(self.screen)
         self.pacman.render(self.screen)
         self.ghosts.render(self.screen)
 

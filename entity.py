@@ -145,3 +145,9 @@ class Entity(object):
         self.startNode = node
         self.target = node
         self.set_position()
+
+    def set_between_nodes(self, direction):
+        if self.node.neighbors[direction] is not None:
+            self.target = self.node.neighbors[direction]
+            self.position = (self.node.position + self.target.position) / 2.0
+

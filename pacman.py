@@ -25,6 +25,8 @@ class Pacman(Entity):
         self.direction = LEFT
         self.speed = 100 * TILEWIDTH / 16
 
+        self.set_between_nodes(LEFT)
+
         # Drawing Pac-Man
         # WILL BE REPLACED LATER
         self.radius = 10
