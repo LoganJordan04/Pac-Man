@@ -35,6 +35,11 @@ class Ghost(Entity):
         # Optional reference to Blinky (used by Inky)
         self.blinky = blinky
 
+    def reset(self):
+        Entity.reset(self)
+        self.points = 200
+        self.directionMethod = self.goal_direction
+
     # Chooses the direction that brings the ghost closest to its current goal.
     # Compares squared distances to avoid expensive square roots.
     def goal_direction(self, directions):

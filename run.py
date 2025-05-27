@@ -29,11 +29,26 @@ class GameController(object):
 
         self.level = 0
 
+        self.lives = 5
+
     def next_level(self):
         self.show_entities()
         self.level += 1
         self.pause.paused = True
         self.start_game()
+
+    def restart_game(self):
+        self.lives = 5
+        self.level = 0
+        self.pause.paused = True
+        self.fruit = None
+        self.start_game()
+
+    def reset_level(self):
+        self.pause.paused = True
+        self.pacman.reset()
+        self.ghosts.reset()
+        self.fruit = None
 
     # Creates a plain black background surface.
     # WILL BE REPLACED LATER
@@ -120,6 +135,15 @@ class GameController(object):
                     ghost.visible = False
                     self.pause.set_pause(pauseTime=1, func=self.show_entities)
                     ghost.start_spawn()
+                elif ghost.mode.current is not SPAWN:
+                    if self.pacman.alive:
+                        self.lives -= 1
+                        self.pacman.die()
+                        self.ghosts.hide()
+                        if self.lives <= 0:
+                            self.pause.set_pause(pauseTime=3, func=self.restart_game)
+                        else:
+                            self.pause.set_pause(pauseTime=3, func=self.reset_level)
 
     def show_entities(self):
         self.pacman.visible = True
@@ -160,11 +184,12 @@ class GameController(object):
                 exit()
             elif event.type == KEYDOWN:
                 if event.key == K_SPACE:
-                    self.pause.set_pause(playerPaused=True)
-                    if not self.pause.paused:
-                        self.show_entities()
-                    else:
-                        self.hide_entities()
+                    if self.pacman.alive:
+                        self.pause.set_pause(playerPaused=True)
+                        if not self.pause.paused:
+                            self.show_entities()
+                        else:
+                            self.hide_entities()
 
     # Draws all game elements to the screen each frame:
     # background, maze nodes, pellets, fruit, Pac-Man, and ghosts.

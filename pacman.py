@@ -41,6 +41,18 @@ class Pacman(Entity):
         # Collision radius used for interacting with pellets and ghosts
         self.collideRadius = 5
 
+        self.alive = True
+
+    def reset(self):
+        Entity.reset(self)
+        self.direction = LEFT
+        self.set_between_nodes(LEFT)
+        self.alive = True
+
+    def die(self):
+        self.alive = False
+        self.direction = STOP
+
     # Sets Pac-Man's pixel position to match the current node position.
     def set_position(self):
         self.position = self.node.position.copy()
