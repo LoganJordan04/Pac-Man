@@ -6,6 +6,7 @@ from nodes import NodeGroup
 from pellets import PelletGroup
 from ghosts import GhostGroup
 from fruit import Fruit
+from pauser import Pause
 
 
 # Main game controller class: handles setup, input, updates, and rendering
@@ -23,6 +24,8 @@ class GameController(object):
         self.clock = pygame.time.Clock()
 
         self.fruit = None
+
+        self.pause = Pause(True)
 
     # Creates a plain black background surface.
     # WILL BE REPLACED LATER
@@ -69,23 +72,28 @@ class GameController(object):
         # Delta time in seconds (30 FPS)
         dt = self.clock.tick(30) / 1000.0
 
-        # Update entity movement and animation
-        self.pacman.update(dt)
-        self.ghosts.update(dt)
+        if not self.pause.paused:
+            # Update entity movement and animation
+            self.pacman.update(dt)
+            self.ghosts.update(dt)
 
-        # Animate flashing pellets (power pellets)
-        self.pellets.update(dt)
+            # Animate flashing pellets (power pellets)
+            self.pellets.update(dt)
 
-        if self.fruit is not None:
-            self.fruit.update(dt)
+            if self.fruit is not None:
+                self.fruit.update(dt)
 
-        # Handle pellet consumption and score tracking
-        self.check_pellet_events()
+            # Handle pellet consumption and score tracking
+            self.check_pellet_events()
 
-        # Handle ghost collisions and mode logic
-        self.check_ghost_events()
+            # Handle ghost collisions and mode logic
+            self.check_ghost_events()
 
-        self.check_fruit_events()
+            self.check_fruit_events()
+
+        afterPauseMethod = self.pause.update(dt)
+        if afterPauseMethod is not None:
+            afterPauseMethod()
 
         # Handle user inputs or system quit events
         self.check_events()
@@ -100,7 +108,18 @@ class GameController(object):
         for ghost in self.ghosts:
             if self.pacman.collide_ghost(ghost):
                 if ghost.mode.current is FREIGHT:
+                    self.pacman.visible = False
+                    ghost.visible = False
+                    self.pause.set_pause(pauseTime=1, func=self.showEntities)
                     ghost.start_spawn()
+
+    def show_entities(self):
+        self.pacman.visible = True
+        self.ghosts.show()
+
+    def hide_entities(self):
+        self.pacman.visible = False
+        self.ghosts.hide()
 
     # Detects if Pac-Man has eaten a pellet.
     # Removes pellet, increments counter, and triggers ghost freight mode if it's a power pellet.
@@ -128,6 +147,13 @@ class GameController(object):
             if event.type == QUIT:
                 # Exit when the user closes the window
                 exit()
+            elif event.type == KEYDOWN:
+                if event.key == K_SPACE:
+                    self.pause.set_pause(playerPaused=True)
+                    if not self.pause.paused:
+                        self.show_entities()
+                    else:
+                        self.hide_entities()
 
     # Draws all game elements to the screen each frame:
     # background, maze nodes, pellets, fruit, Pac-Man, and ghosts.
