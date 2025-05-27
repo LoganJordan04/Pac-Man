@@ -20,14 +20,31 @@ class Node(object):
             PORTAL: None
         }
 
+        # Controls which entities are allowed to move in each direction
+        self.access = {
+            UP: [PACMAN, BLINKY, PINKY, INKY, CLYDE, FRUIT],
+            DOWN: [PACMAN, BLINKY, PINKY, INKY, CLYDE, FRUIT],
+            LEFT: [PACMAN, BLINKY, PINKY, INKY, CLYDE, FRUIT],
+            RIGHT: [PACMAN, BLINKY, PINKY, INKY, CLYDE, FRUIT]
+        }
+
+    # Prevent a specific entity from moving in a given direction at this node
+    def deny_access(self, direction, entity):
+        if entity.name in self.access[direction]:
+            self.access[direction].remove(entity.name)
+
+    # Allow a specific entity to move in a given direction at this node
+    def allow_access(self, direction, entity):
+        if entity.name not in self.access[direction]:
+            self.access[direction].append(entity.name)
+
     # Renders the node and its connections for debugging.
     # WILL BE UPDATED LATER
     def render(self, screen):
-        for n in self.neighbors.keys():
-            if self.neighbors[n] is not None:
-                line_start = self.position.as_tuple()
-                line_end = self.neighbors[n].position.as_tuple()
-                pygame.draw.line(screen, DARK_GRAY, line_start, line_end, 4)
+        for direction in self.neighbors:
+            neighbor = self.neighbors[direction]
+            if neighbor:
+                pygame.draw.line(screen, DARK_GRAY, self.position.as_tuple(), neighbor.position.as_tuple(), 4)
                 pygame.draw.circle(screen, DARK_GRAY, self.position.as_int(), 12)
 
 
@@ -78,7 +95,8 @@ class NodeGroup(object):
         for row in range(data.shape[0]):
             key = None
             for col in range(data.shape[1]):
-                if data[row][col] in self.nodeSymbols:
+                symbol = data[row][col]
+                if symbol in self.nodeSymbols:
                     if key is None:
                         key = self.construct_key(col + xoffset, row + yoffset)
                     else:
@@ -86,7 +104,7 @@ class NodeGroup(object):
                         self.nodesLUT[key].neighbors[RIGHT] = self.nodesLUT[otherkey]
                         self.nodesLUT[otherkey].neighbors[LEFT] = self.nodesLUT[key]
                         key = otherkey
-                elif data[row][col] not in self.pathSymbols:
+                elif symbol not in self.pathSymbols:
                     # Reset chain if path breaks
                     key = None
 
@@ -97,7 +115,8 @@ class NodeGroup(object):
         for col in range(dataT.shape[0]):
             key = None
             for row in range(dataT.shape[1]):
-                if dataT[col][row] in self.nodeSymbols:
+                symbol = dataT[col][row]
+                if symbol in self.nodeSymbols:
                     if key is None:
                         key = self.construct_key(col + xoffset, row + yoffset)
                     else:
@@ -105,7 +124,7 @@ class NodeGroup(object):
                         self.nodesLUT[key].neighbors[DOWN] = self.nodesLUT[otherkey]
                         self.nodesLUT[otherkey].neighbors[UP] = self.nodesLUT[key]
                         key = otherkey
-                elif dataT[col][row] not in self.pathSymbols:
+                elif symbol not in self.pathSymbols:
                     # Reset chain if path breaks
                     key = None
 
@@ -123,16 +142,11 @@ class NodeGroup(object):
     def get_start_temp_node(self):
         return list(self.nodesLUT.values())[0]
 
-    # Draws all nodes and their connections (for debugging).
-    def render(self, screen):
-        for node in self.nodesLUT.values():
-            node.render(screen)
-
     # Sets up bidirectional teleport connections between two portal nodes.
     def set_portal_pair(self, pair1, pair2):
         key1 = self.construct_key(*pair1)
         key2 = self.construct_key(*pair2)
-        if key1 in self.nodesLUT and key2 in self.nodesLUT:
+        if key1 in self.nodesLUT.keys() and key2 in self.nodesLUT.keys():
             self.nodesLUT[key1].neighbors[PORTAL] = self.nodesLUT[key2]
             self.nodesLUT[key2].neighbors[PORTAL] = self.nodesLUT[key1]
 
@@ -145,7 +159,6 @@ class NodeGroup(object):
             ['+', '.', '+', '.', '+'],
             ['+', 'X', 'X', 'X', '+']
         ])
-
         self.create_node_table(homedata, xoffset, yoffset)
         self.connect_horizontally(homedata, xoffset, yoffset)
         self.connect_vertically(homedata, xoffset, yoffset)
@@ -159,3 +172,43 @@ class NodeGroup(object):
         key = self.construct_key(*otherkey)
         self.nodesLUT[homekey].neighbors[direction] = self.nodesLUT[key]
         self.nodesLUT[key].neighbors[direction * -1] = self.nodesLUT[homekey]
+
+    # Deny or allow access to a specific tile direction for a single entity
+    def deny_access(self, col, row, direction, entity):
+        node = self.get_node_from_tiles(col, row)
+        if node:
+            node.deny_access(direction, entity)
+
+    def allow_access(self, col, row, direction, entity):
+        node = self.get_node_from_tiles(col, row)
+        if node:
+            node.allow_access(direction, entity)
+
+    # Bulk access control for multiple entities
+    def deny_access_list(self, col, row, direction, entities):
+        for entity in entities:
+            self.deny_access(col, row, direction, entity)
+
+    def allow_access_list(self, col, row, direction, entities):
+        for entity in entities:
+            self.allow_access(col, row, direction, entity)
+
+    def deny_home_access(self, entity):
+        self.nodesLUT[self.homekey].deny_access(DOWN, entity)
+
+    # Access control specifically for the ghost house center
+    def allow_home_access(self, entity):
+        self.nodesLUT[self.homekey].allow_access(DOWN, entity)
+
+    def deny_home_access_list(self, entities):
+        for entity in entities:
+            self.deny_home_access(entity)
+
+    def allow_home_access_list(self, entities):
+        for entity in entities:
+            self.allow_home_access(entity)
+
+    # Draws all nodes and their connections (for debugging).
+    def render(self, screen):
+        for node in self.nodesLUT.values():
+            node.render(screen)

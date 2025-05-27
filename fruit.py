@@ -14,7 +14,7 @@ class Fruit(Entity):
         self.color = GREEN
 
         # Seconds the fruit remains active on screen
-        self.lifespan = 5
+        self.lifespan = 10
         self.timer = 0
 
         # Flag indicating if the fruit should disappear
