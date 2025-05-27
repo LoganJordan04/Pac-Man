@@ -86,6 +86,7 @@ class Ghost(Entity):
     def normal_mode(self):
         self.set_speed(100)
         self.directionMethod = self.goal_direction
+        self.homeNode.deny_access(DOWN, self)
 
     # Target the spawn location (used after being eaten)
     def spawn(self):
