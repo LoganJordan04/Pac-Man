@@ -5,8 +5,8 @@ from constants import *
 from random import randint
 
 
-# Base class for all moving characters (Pac-Man, ghosts).
-# Manages direction-based movement across the node graph, target tracking, and rendering.
+# Base class for all movable characters in the game (e.g., Pac-Man, ghosts).
+# Manages movement across the maze, rendering, and basic AI direction logic.
 class Entity(object):
     def __init__(self, node):
         self.name = None
@@ -145,3 +145,16 @@ class Entity(object):
         self.startNode = node
         self.target = node
         self.set_position()
+
+    # Places entity between current node and a specified neighbor
+    def set_between_nodes(self, direction):
+        if self.node.neighbors[direction] is not None:
+            self.target = self.node.neighbors[direction]
+            self.position = (self.node.position + self.target.position) / 2.0
+
+    # Fully resets the entity to its start state (e.g. after death or new level)
+    def reset(self):
+        self.set_start_node(self.startNode)
+        self.direction = STOP
+        self.speed = 100
+        self.visible = True
