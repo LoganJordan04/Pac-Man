@@ -7,6 +7,7 @@ from pellets import PelletGroup
 from ghosts import GhostGroup
 from fruit import Fruit
 from pauser import Pause
+from text import TextGroup
 
 
 # Main game controller class: handles setup, updates, input, collisions, and rendering
@@ -33,6 +34,9 @@ class GameController(object):
         self.level = 0
         self.lives = 5
 
+        self.score = 0
+        self.textgroup = TextGroup()
+
     # Restarts the game from level 0 with full lives after game over.
     def restart_game(self):
         self.lives = 5
@@ -40,6 +44,10 @@ class GameController(object):
         self.pause.paused = True
         self.fruit = None
         self.start_game()
+        self.score = 0
+        self.textgroup.update_score(self.score)
+        self.textgroup.update_level(self.level)
+        self.textgroup.show_text(READYTXT)
 
     # Resets the current level after a player death (if lives remain).
     def reset_level(self):
@@ -47,6 +55,7 @@ class GameController(object):
         self.pacman.reset()
         self.ghosts.reset()
         self.fruit = None
+        self.textgroup.show_text(READYTXT)
 
     # Called when all pellets are eaten.
     # Advances to the next level and resets game entities.
@@ -55,6 +64,7 @@ class GameController(object):
         self.level += 1
         self.pause.paused = True
         self.start_game()
+        self.textgroup.update_level(self.level)
 
     # Creates a plain black background surface.
     # WILL BE REPLACED LATER
@@ -112,6 +122,8 @@ class GameController(object):
         # Delta time in seconds (30 FPS)
         dt = self.clock.tick(30) / 1000.0
 
+        self.textgroup.update(dt)
+
         # Animate flashing pellets (power pellets)
         self.pellets.update(dt)
 
@@ -141,6 +153,10 @@ class GameController(object):
         # Draw updated frame to screen
         self.render()
 
+    def update_score(self, points):
+        self.score += points
+        self.textgroup.update_score(self.score)
+
     # Checks for Pygame events such as closing the game window.
     def check_events(self):
         for event in pygame.event.get():
@@ -151,8 +167,10 @@ class GameController(object):
                     if self.pacman.alive:
                         self.pause.set_pause(playerPaused=True)
                         if not self.pause.paused:
+                            self.textgroup.hide_text()
                             self.show_entities()
                         else:
+                            self.textgroup.show_text(PAUSETXT)
                             self.hide_entities()
 
     # Detect collisions between Pac-Man and ghosts.
@@ -163,6 +181,9 @@ class GameController(object):
                 if ghost.mode.current is FREIGHT:
                     self.pacman.visible = False
                     ghost.visible = False
+                    self.update_score(ghost.points)
+                    self.textgroup.add_text(str(ghost.points), WHITE, ghost.position.x, ghost.position.y, 8, time=1)
+                    self.ghosts.update_points()
                     self.pause.set_pause(pauseTime=1, func=self.show_entities)
                     ghost.start_spawn()
                     self.nodes.allow_home_access(ghost)
@@ -172,6 +193,7 @@ class GameController(object):
                         self.pacman.die()
                         self.ghosts.hide()
                         if self.lives <= 0:
+                            self.textgroup.show_text(GAMEOVERTXT)
                             self.pause.set_pause(pauseTime=3, func=self.restart_game)
                         else:
                             self.pause.set_pause(pauseTime=3, func=self.reset_level)
@@ -179,10 +201,16 @@ class GameController(object):
     # Controls fruit appearance and collision with Pac-Man.
     # Fruit appears after eating 50 or 140 pellets.
     def check_fruit_events(self):
-        if self.pellets.numEaten in [50, 140] and self.fruit is None:
-            self.fruit = Fruit(self.nodes.get_node_from_tiles(9, 20))
+        if self.pellets.numEaten == 50 or self.pellets.numEaten == 140:
+            if self.fruit is None:
+                self.fruit = Fruit(self.nodes.get_node_from_tiles(9, 20))
+                print(self.fruit)
         if self.fruit is not None:
-            if self.pacman.collide_check(self.fruit) or self.fruit.destroy:
+            if self.pacman.collide_check(self.fruit):
+                self.update_score(self.fruit.points)
+                self.textgroup.add_text(str(self.fruit.points), WHITE, self.fruit.position.x, self.fruit.position.y, 8, time=1)
+                self.fruit = None
+            elif self.fruit.destroy:
                 self.fruit = None
 
     # Detects if Pac-Man has eaten a pellet.
@@ -191,6 +219,7 @@ class GameController(object):
         pellet = self.pacman.eat_pellets(self.pellets.pelletList)
         if pellet:
             self.pellets.numEaten += 1
+            self.update_score(pellet.points)
 
             if self.pellets.numEaten == 30:
                 self.ghosts.inky.startNode.allow_access(RIGHT, self.ghosts.inky)
@@ -228,6 +257,8 @@ class GameController(object):
 
         self.pacman.render(self.screen)
         self.ghosts.render(self.screen)
+
+        self.textgroup.render(self.screen)
 
         # Refresh the screen with the new frame
         pygame.display.update()
