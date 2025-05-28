@@ -8,6 +8,7 @@ from ghosts import GhostGroup
 from fruit import Fruit
 from pauser import Pause
 from text import TextGroup
+from sprites import LifeSprites
 
 
 # Main game controller class: handles setup, updates, input, collisions, and rendering
@@ -37,6 +38,8 @@ class GameController(object):
         self.score = 0
         self.textgroup = TextGroup()
 
+        self.lifesprites = LifeSprites(self.lives)
+
     # Restarts the game from level 0 with full lives after game over.
     def restart_game(self):
         self.lives = 5
@@ -48,6 +51,7 @@ class GameController(object):
         self.textgroup.update_score(self.score)
         self.textgroup.update_level(self.level)
         self.textgroup.show_text(READYTXT)
+        self.lifesprites.reset_lives(self.lives)
 
     # Resets the current level after a player death (if lives remain).
     def reset_level(self):
@@ -190,6 +194,7 @@ class GameController(object):
                 elif ghost.mode.current is not SPAWN:
                     if self.pacman.alive:
                         self.lives -= 1
+                        self.lifesprites.remove_image()
                         self.pacman.die()
                         self.ghosts.hide()
                         if self.lives <= 0:
@@ -259,6 +264,11 @@ class GameController(object):
         self.ghosts.render(self.screen)
 
         self.textgroup.render(self.screen)
+
+        for i in range(len(self.lifesprites.images)):
+            x = self.lifesprites.images[i].get_width() * i
+            y = SCREENHEIGHT - self.lifesprites.images[i].get_height()
+            self.screen.blit(self.lifesprites.images[i], (x, y))
 
         # Refresh the screen with the new frame
         pygame.display.update()

@@ -88,3 +88,25 @@ class FruitSprites(Spritesheet):
     def get_image(self, x, y):
         return super().get_image(x, y, 2 * TILEWIDTH, 2 * TILEHEIGHT)
 
+
+# Displays Pac-Man lives as icons on screen.
+class LifeSprites(Spritesheet):
+    def __init__(self, numlives):
+        Spritesheet.__init__(self)
+        self.reset_lives(numlives)
+
+    # Removes one life icon (e.g., after player dies).
+    def remove_image(self):
+        if len(self.images) > 0:
+            self.images.pop(0)
+
+    # Resets the life icons to the specified number.
+    def reset_lives(self, numlives):
+        self.images = []
+        for i in range(numlives):
+            self.images.append(self.get_image(0,0))
+
+    # Loads a 2x2 tile sprite for Pac-Man's life icon.
+    def get_image(self, x, y):
+        return Spritesheet.get_image(self, x, y, 2*TILEWIDTH, 2*TILEHEIGHT)
+
