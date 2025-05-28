@@ -106,6 +106,32 @@ class GhostSprites(Spritesheet):
     def get_image(self, x, y):
         return super().get_image(x, y, 2 * TILEWIDTH, 2 * TILEHEIGHT)
 
+    # Update the ghost's animation frame based on direction
+    def update(self, dt):
+        x = self.x[self.entity.name]
+
+        if self.entity.mode.current in [SCATTER, CHASE]:
+            if self.entity.direction == LEFT:
+                self.entity.image = self.get_image(x, 8)
+            elif self.entity.direction == RIGHT:
+                self.entity.image = self.get_image(x, 10)
+            elif self.entity.direction == DOWN:
+                self.entity.image = self.get_image(x, 6)
+            elif self.entity.direction == UP:
+                self.entity.image = self.get_image(x, 4)
+
+        elif self.entity.mode.current == FREIGHT:
+            self.entity.image = self.get_image(10, 4)
+        elif self.entity.mode.current == SPAWN:
+            if self.entity.direction == LEFT:
+                self.entity.image = self.get_image(8, 8)
+            elif self.entity.direction == RIGHT:
+                self.entity.image = self.get_image(8, 10)
+            elif self.entity.direction == DOWN:
+                self.entity.image = self.get_image(8, 6)
+            elif self.entity.direction == UP:
+                self.entity.image = self.get_image(8, 4)
+
 
 # Handles sprite loading for the fruit bonus item.
 class FruitSprites(Spritesheet):
