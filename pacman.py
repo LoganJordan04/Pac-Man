@@ -62,10 +62,11 @@ class Pacman(Entity):
     def set_position(self):
         self.position = self.node.position.copy()
 
-    # Called every frame to update Pac-Man's position and handle direction input.
+    # Called every frame to update Pac-Man's position, animation, and handle direction input.
     # Uses delta time (dt) for frame-rate-independent movement.
     def update(self, dt):
         self.position += self.directions[self.direction] * self.speed * dt
+        self.sprites.update(dt)
 
         # Get current input direction
         direction = self.get_valid_key()

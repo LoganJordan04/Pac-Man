@@ -1,6 +1,7 @@
 import pygame
 from constants import *
 import numpy as np
+from animation import Animator
 
 # Base dimensions of a tile in the spritesheet (used for scaling to screen resolution)
 BASETILEWIDTH = 16
@@ -35,9 +36,13 @@ class PacmanSprites(Spritesheet):
     def __init__(self, entity):
         super().__init__()
         self.entity = entity
-
-        # Assign starting image to entity
         self.entity.image = self.get_start_image()
+
+        self.animations = {}
+        self.define_animations()
+
+        # Default "mouth closed" sprite
+        self.stopimage = (8, 0)
 
     # Loads Pac-Man's default sprite (e.g., mouth closed at starting position).
     def get_start_image(self):
@@ -46,6 +51,35 @@ class PacmanSprites(Spritesheet):
     # Returns a specific Pac-Man sprite at grid (x, y) on the sheet.
     def get_image(self, x, y):
         return Spritesheet.get_image(self, x, y, 2*TILEWIDTH, 2*TILEHEIGHT)
+
+    # Assign animations for movement in each direction
+    def define_animations(self):
+        self.animations[LEFT] = Animator(((8, 0), (0, 0), (0, 2), (0, 0)))
+        self.animations[RIGHT] = Animator(((10, 0), (2, 0), (2, 2), (2, 0)))
+        self.animations[UP] = Animator(((10, 2), (6, 0), (6, 2), (6, 0)))
+        self.animations[DOWN] = Animator(((8, 2), (4, 0), (4, 2), (4, 0)))
+
+    # Update Pac-Man's animation frame based on direction
+    def update(self, dt):
+        if self.entity.direction == LEFT:
+            self.entity.image = self.get_image(*self.animations[LEFT].update(dt))
+            self.stopimage = (8, 0)
+        elif self.entity.direction == RIGHT:
+            self.entity.image = self.get_image(*self.animations[RIGHT].update(dt))
+            self.stopimage = (10, 0)
+        elif self.entity.direction == DOWN:
+            self.entity.image = self.get_image(*self.animations[DOWN].update(dt))
+            self.stopimage = (8, 2)
+        elif self.entity.direction == UP:
+            self.entity.image = self.get_image(*self.animations[UP].update(dt))
+            self.stopimage = (10, 2)
+        elif self.entity.direction == STOP:
+            self.entity.image = self.get_image(*self.stopimage)
+
+    # Reset all animations to initial state
+    def reset(self):
+        for key in list(self.animations.keys()):
+            self.animations[key].reset()
 
 
 # Handles sprite logic for the four ghost characters.
