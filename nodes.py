@@ -39,7 +39,6 @@ class Node(object):
             self.access[direction].append(entity.name)
 
     # Renders the node and its connections for debugging.
-    # WILL BE UPDATED LATER
     def render(self, screen):
         for direction in self.neighbors:
             neighbor = self.neighbors[direction]

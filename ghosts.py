@@ -54,9 +54,11 @@ class Ghost(Entity):
         index = distances.index(min(distances))
         return directions[index]
 
-    # Called every frame to update ghost logic and movement.
+    # Called every frame to update ghost logic, animation, and movement.
     # Applies AI mode logic before standard position update.
     def update(self, dt):
+        self.sprites.update(dt)
+
         # Handle timing and transitions between modes
         self.mode.update(dt)
 
