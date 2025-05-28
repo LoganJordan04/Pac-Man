@@ -10,6 +10,7 @@ from random import randint
 class Entity(object):
     def __init__(self, node):
         self.name = None
+        self.image = None
 
         # Define movement vectors for each direction
         self.directions = {
@@ -173,5 +174,8 @@ class Entity(object):
     # WILL BE UPDATED LATER
     def render(self, screen):
         if self.visible:
-            p = self.position.as_int()
-            pygame.draw.circle(screen, self.color, p, self.radius)
+            if self.image is not None:
+                screen.blit(self.image, self.position.as_tuple())
+            else:
+                p = self.position.as_int()
+                pygame.draw.circle(screen, self.color, p, self.radius)

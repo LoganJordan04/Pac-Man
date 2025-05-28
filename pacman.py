@@ -3,6 +3,7 @@ from pygame.locals import *
 from vector import Vector2
 from constants import *
 from entity import Entity
+from sprites import PacmanSprites
 
 
 # The main player class representing Pac-Man.
@@ -32,6 +33,8 @@ class Pacman(Entity):
         # WILL BE REPLACED LATER
         self.radius = 10
         self.color = YELLOW
+
+        self.sprites = PacmanSprites(self)
 
         # Initialize position of Pac-Man
         # Sets the current node and the target node Pac-Man is moving toward
