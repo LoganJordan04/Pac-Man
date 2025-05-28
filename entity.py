@@ -25,7 +25,6 @@ class Entity(object):
         self.set_speed(100)
 
         # Drawing the entities
-        # WILL BE REPLACED LATER
         self.radius = 10
         self.color = WHITE
 
@@ -170,12 +169,12 @@ class Entity(object):
         index = distances.index(min(distances))
         return directions[index]
 
-    # Render the entity as a colored circle
-    # WILL BE UPDATED LATER
+    # Renders the entity's sprite or fallback debug circle
     def render(self, screen):
         if self.visible:
             if self.image is not None:
-                screen.blit(self.image, self.position.as_tuple())
+                adjust = Vector2(TILEWIDTH, TILEHEIGHT) / 2
+                p = self.position - adjust
+                screen.blit(self.image, p.as_tuple())
             else:
-                p = self.position.as_int()
-                pygame.draw.circle(screen, self.color, p, self.radius)
+                pygame.draw.circle(screen, self.color, self.position.as_int(), self.radius)

@@ -1,6 +1,7 @@
 import pygame
 from entity import Entity
 from constants import *
+from sprites import FruitSprites
 
 # Represents the bonus fruit that appears temporarily in the maze.
 # Inherits basic position and rendering logic from Entity.
@@ -9,9 +10,9 @@ class Fruit(Entity):
         Entity.__init__(self, node)
         self.name = FRUIT
 
-        # Color used to draw the fruit
-        # WILL BE REPLACED LATER
+        # Drawing the fruit
         self.color = GREEN
+        self.sprites = FruitSprites(self)
 
         # Seconds the fruit remains active on screen
         self.lifespan = 10

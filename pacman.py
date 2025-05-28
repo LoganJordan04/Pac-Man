@@ -30,10 +30,8 @@ class Pacman(Entity):
         self.set_between_nodes(LEFT)
 
         # Drawing Pac-Man
-        # WILL BE REPLACED LATER
         self.radius = 10
         self.color = YELLOW
-
         self.sprites = PacmanSprites(self)
 
         # Initialize position of Pac-Man
@@ -128,12 +126,6 @@ class Pacman(Entity):
             return RIGHT
 
         return STOP
-
-    # Draws Pac-Man on the screen as a yellow circle at his current position.
-    # WILL BE UPDATED LATER
-    def render(self, screen):
-        p = self.position.as_int()
-        pygame.draw.circle(screen, self.color, p, self.radius)
 
     # Returns True if Pac-Man has moved past his target node.
     # Prevents floating-point imprecision and ensures snapping to nodes.

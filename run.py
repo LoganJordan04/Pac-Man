@@ -9,6 +9,7 @@ from fruit import Fruit
 from pauser import Pause
 from text import TextGroup
 from sprites import LifeSprites
+from sprites import MazeSprites
 
 
 # Main game controller class: handles setup, updates, input, collisions, and rendering
@@ -34,11 +35,10 @@ class GameController(object):
         # Current level and remaining lives
         self.level = 0
         self.lives = 5
+        self.lifesprites = LifeSprites(self.lives)
 
         self.score = 0
         self.textgroup = TextGroup()
-
-        self.lifesprites = LifeSprites(self.lives)
 
     # Restarts the game from level 0 with full lives after game over.
     def restart_game(self):
@@ -71,7 +71,6 @@ class GameController(object):
         self.textgroup.update_level(self.level)
 
     # Creates a plain black background surface.
-    # WILL BE REPLACED LATER
     def set_background(self):
         self.background = pygame.surface.Surface(SCREENSIZE).convert()
         self.background.fill(BLACK)
@@ -80,6 +79,8 @@ class GameController(object):
     # Loads the maze from file, places all entities, and sets up portals and ghost house.
     def start_game(self):
         self.set_background()
+        self.mazesprites = MazeSprites("maze1.txt", "maze1_rotation.txt")
+        self.background = self.mazesprites.construct_background(self.background, self.level % 5)
 
         # Load maze layout and create graph of nodes
         self.nodes = NodeGroup("maze1.txt")
@@ -254,7 +255,6 @@ class GameController(object):
     # background, maze, pellets, fruit, Pac-Man, and ghosts.
     def render(self):
         self.screen.blit(self.background, (0, 0))
-        self.nodes.render(self.screen)
         self.pellets.render(self.screen)
 
         if self.fruit is not None:

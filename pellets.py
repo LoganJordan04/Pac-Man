@@ -15,8 +15,8 @@ class Pellet(object):
         self.color = WHITE
 
         # Visual size and collision range
-        self.radius = int(4 * TILEWIDTH / 16)
-        self.collideRadius = int(4 * TILEWIDTH / 16)
+        self.radius = int(2 * TILEWIDTH / 16)
+        self.collideRadius = int(2 * TILEWIDTH / 16)
 
         # Score value
         self.points = 10
@@ -28,8 +28,9 @@ class Pellet(object):
     # Only renders if pellet is marked visible.
     def render(self, screen):
         if self.visible:
-            p = self.position.as_int()
-            pygame.draw.circle(screen, self.color, p, self.radius)
+            adjust = Vector2(TILEWIDTH, TILEHEIGHT) / 2
+            p = self.position + adjust
+            pygame.draw.circle(screen, self.color, p.as_int(), self.radius)
 
 
 # A subclass of Pellet that represents a Power Pellet.

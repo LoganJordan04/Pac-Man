@@ -78,7 +78,7 @@ class FruitSprites(Spritesheet):
     def __init__(self, entity):
         super().__init__()
         self.entity = entity
-        self.entity.image = self.getStartImage()
+        self.entity.image = self.get_start_image()
 
     # Loads the default fruit sprite from the sheet.
     def get_start_image(self):
@@ -110,3 +110,33 @@ class LifeSprites(Spritesheet):
     def get_image(self, x, y):
         return Spritesheet.get_image(self, x, y, 2*TILEWIDTH, 2*TILEHEIGHT)
 
+
+class MazeSprites(Spritesheet):
+    def __init__(self, mazefile, rotfile):
+        Spritesheet.__init__(self)
+        self.data = self.read_maze_file(mazefile)
+        self.rotdata = self.read_maze_file(rotfile)
+
+    def get_image(self, x, y):
+        return Spritesheet.get_image(self, x, y, TILEWIDTH, TILEHEIGHT)
+
+    def read_maze_file(self, mazefile):
+        return np.loadtxt(mazefile, dtype='<U1')
+
+    def construct_background(self, background, y):
+        for row in list(range(self.data.shape[0])):
+            for col in list(range(self.data.shape[1])):
+                if self.data[row][col].isdigit():
+                    x = int(self.data[row][col]) + 12
+                    sprite = self.get_image(x, y)
+                    rotval = int(self.rotdata[row][col])
+                    sprite = self.rotate(sprite, rotval)
+                    background.blit(sprite, (col*TILEWIDTH, row*TILEHEIGHT))
+                elif self.data[row][col] == '=':
+                    sprite = self.get_image(10, 8)
+                    background.blit(sprite, (col*TILEWIDTH, row*TILEHEIGHT))
+
+        return background
+
+    def rotate(self, sprite, value):
+        return pygame.transform.rotate(sprite, value * 90)
