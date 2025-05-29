@@ -6,13 +6,15 @@ from sprites import FruitSprites
 # Represents the bonus fruit that appears temporarily in the maze.
 # Inherits basic position and rendering logic from Entity.
 class Fruit(Entity):
-    def __init__(self, node):
+    def __init__(self, node, level=0):
         Entity.__init__(self, node)
         self.name = FRUIT
 
-        # Drawing the fruit
+        # Color used if rendering as a shape instead of sprite
         self.color = GREEN
-        self.sprites = FruitSprites(self)
+
+        # Loads fruit sprite graphic
+        self.sprites = FruitSprites(self, level)
 
         # Seconds the fruit remains active on screen
         self.lifespan = 10
@@ -21,7 +23,8 @@ class Fruit(Entity):
         # Flag indicating if the fruit should disappear
         self.destroy = False
 
-        self.points = 100
+        # Score points based on level progression
+        self.points = 100 + level*20
 
         # By default, the fruit is placed in-between nodes, typically at an intersection
         self.set_between_nodes(RIGHT)

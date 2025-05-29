@@ -137,16 +137,19 @@ class GhostSprites(Spritesheet):
                 self.entity.image = self.get_image(8, 4)
 
 
-# Handles sprite loading for the fruit bonus item.
+# Loads the correct fruit sprite based on current level (looped).
 class FruitSprites(Spritesheet):
-    def __init__(self, entity):
+    def __init__(self, entity, level):
         super().__init__()
         self.entity = entity
-        self.entity.image = self.get_start_image()
+
+        # Sprites vary (cherry, strawberry, etc.) based on modulo of level index.
+        self.fruits = {0: (16, 8), 1: (18, 8), 2: (20, 8), 3: (16, 10), 4: (18, 10), 5: (20, 10)}
+        self.entity.image = self.get_start_image(level % len(self.fruits))
 
     # Loads the default fruit sprite from the sheet.
-    def get_start_image(self):
-        return self.get_image(16, 8)
+    def get_start_image(self, key):
+        return self.get_image(*self.fruits[key])
 
     # Returns a specific fruit sprite from tile (x, y).
     def get_image(self, x, y):

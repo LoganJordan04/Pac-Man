@@ -20,9 +20,8 @@ class GameController(object):
         # Create the main display surface using screen size defined in constants.py
         self.screen = pygame.display.set_mode(SCREENSIZE, 0, 32)
 
-        # Surface used as the static background (e.g., maze backdrop)
+        # Sets the default maze background
         self.background = None
-
         self.background_norm = None
         self.background_flash = None
 
@@ -31,6 +30,7 @@ class GameController(object):
 
         # Bonus fruit object (appears temporarily)
         self.fruit = None
+        self.fruitCaptured = []
 
         # Pause manager for delays and manual pauses
         self.pause = Pause(True)
@@ -43,9 +43,11 @@ class GameController(object):
         self.score = 0
         self.textgroup = TextGroup()
 
+        # Maze flash (when completing a level) and the active timer
         self.flashBG = False
         self.flashTime = 0.2
         self.flashTimer = 0
+
 
     # Restarts the game from level 0 with full lives after game over.
     def restart_game(self):
@@ -53,6 +55,7 @@ class GameController(object):
         self.level = 0
         self.pause.paused = True
         self.fruit = None
+        self.fruitCaptured = []
         self.start_game()
         self.score = 0
         self.textgroup.update_score(self.score)
@@ -246,6 +249,16 @@ class GameController(object):
             if self.pacman.collide_check(self.fruit):
                 self.update_score(self.fruit.points)
                 self.textgroup.add_text(str(self.fruit.points), WHITE, self.fruit.position.x, self.fruit.position.y, 8, time=1)
+
+                # Capturing the fruit
+                fruitCaptured = False
+                for fruit in self.fruitCaptured:
+                    if fruit.get_offset() == self.fruit.image.get_offset():
+                        fruitCaptured = True
+                        break
+                if not fruitCaptured:
+                    self.fruitCaptured.append(self.fruit.image)
+
                 self.fruit = None
             elif self.fruit.destroy:
                 self.fruit = None
@@ -285,7 +298,7 @@ class GameController(object):
         self.ghosts.hide()
 
     # Draws all game elements to the screen each frame:
-    # background, maze, pellets, fruit, Pac-Man, and ghosts.
+    # background, maze, pellets, fruit, Pac-Man, ghosts, and lives.
     def render(self):
         self.screen.blit(self.background, (0, 0))
         self.pellets.render(self.screen)
@@ -302,6 +315,11 @@ class GameController(object):
             x = self.lifesprites.images[i].get_width() * i
             y = SCREENHEIGHT - self.lifesprites.images[i].get_height()
             self.screen.blit(self.lifesprites.images[i], (x, y))
+
+        for i in range(len(self.fruitCaptured)):
+            x = SCREENWIDTH - self.fruitCaptured[i].get_width() * (i + 1)
+            y = SCREENHEIGHT - self.fruitCaptured[i].get_height()
+            self.screen.blit(self.fruitCaptured[i], (x, y))
 
         # Refresh the screen with the new frame
         pygame.display.update()
