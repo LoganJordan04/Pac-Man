@@ -134,7 +134,6 @@ class GameController(object):
 
         if not self.pause.paused:
             # Update entity movement and animation
-            self.pacman.update(dt)
             self.ghosts.update(dt)
             if self.fruit is not None:
                 self.fruit.update(dt)
@@ -147,6 +146,12 @@ class GameController(object):
 
             # Handle fruit consumption and spawning
             self.check_fruit_events()
+
+        if self.pacman.alive:
+            if not self.pause.paused:
+                self.pacman.update(dt)
+        else:
+            self.pacman.update(dt)
 
         afterPauseMethod = self.pause.update(dt)
         if afterPauseMethod is not None:
