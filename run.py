@@ -10,6 +10,7 @@ from pauser import Pause
 from text import TextGroup
 from sprites import LifeSprites
 from sprites import MazeSprites
+from mazedata import MazeData
 
 
 # Main game controller class: handles setup, updates, input, collisions, and rendering
@@ -27,6 +28,8 @@ class GameController(object):
 
         # Clock to manage time between frames and limit frame rate
         self.clock = pygame.time.Clock()
+
+        self.mazedata = MazeData()
 
         # Bonus fruit object (appears temporarily)
         self.fruit = None
@@ -98,47 +101,41 @@ class GameController(object):
     # Called once at game start. Initializes maze, Pac-Man, ghosts, and pellets.
     # Loads the maze from file, places all entities, and sets up portals and ghost house.
     def start_game(self):
-        self.mazesprites = MazeSprites("maze1.txt", "maze1_rotation.txt")
+        self.mazedata.load_maze(self.level)
+        self.mazesprites = MazeSprites(self.mazedata.obj.name + ".txt", self.mazedata.obj.name + "_rotation.txt")
         self.set_background()
 
         # Load maze layout and create graph of nodes
-        self.nodes = NodeGroup("maze1.txt")
+        self.nodes = NodeGroup(self.mazedata.obj.name+".txt")
 
         # Link left and right edge nodes as teleport portals
-        self.nodes.set_portal_pair((0, 17), (27, 17))
+        self.mazedata.obj.set_portal_pairs(self.nodes)
 
         # Create and connect nodes for the ghost house in the maze
-        homekey = self.nodes.create_home_nodes(11.5, 14)
-        self.nodes.connect_home_nodes(homekey, (12, 14), LEFT)
-        self.nodes.connect_home_nodes(homekey, (15, 14), RIGHT)
+        self.mazedata.obj.connect_home_nodes(self.nodes)
 
-        # Initialize Pac-Man at a specific node
-        self.pacman = Pacman(self.nodes.get_node_from_tiles(15, 26))
+        # Initialize Pac-Man at a specific start node
+        self.pacman = Pacman(self.nodes.get_node_from_tiles(*self.mazedata.obj.pacmanStart))
 
         # Load pellets based on maze layout
-        self.pellets = PelletGroup("maze1.txt")
+        self.pellets = PelletGroup(self.mazedata.obj.name+".txt")
 
         # Initialize all four ghosts and assign starting positions
         self.ghosts = GhostGroup(self.nodes.get_start_temp_node(), self.pacman)
-        self.ghosts.blinky.set_start_node(self.nodes.get_node_from_tiles(2 + 11.5, 0 + 14))
-        self.ghosts.pinky.set_start_node(self.nodes.get_node_from_tiles(2 + 11.5, 3 + 14))
-        self.ghosts.inky.set_start_node(self.nodes.get_node_from_tiles(0 + 11.5, 3 + 14))
-        self.ghosts.clyde.set_start_node(self.nodes.get_node_from_tiles(4 + 11.5, 3 + 14))
+        self.ghosts.pinky.set_start_node(self.nodes.get_node_from_tiles(*self.mazedata.obj.add_offset(2, 3)))
+        self.ghosts.inky.set_start_node(self.nodes.get_node_from_tiles(*self.mazedata.obj.add_offset(0, 3)))
+        self.ghosts.clyde.set_start_node(self.nodes.get_node_from_tiles(*self.mazedata.obj.add_offset(4, 3)))
+        self.ghosts.blinky.set_start_node(self.nodes.get_node_from_tiles(*self.mazedata.obj.add_offset(2, 0)))
 
         # Set spawn target (ghost house center) for ghosts when eaten
-        self.ghosts.set_spawn_node(self.nodes.get_node_from_tiles(2 + 11.5, 3 + 14))
+        self.ghosts.set_spawn_node(self.nodes.get_node_from_tiles(*self.mazedata.obj.add_offset(2, 3)))
 
         # Restrict access to ghost house or junctions as needed
         self.nodes.deny_home_access(self.pacman)
         self.nodes.deny_home_access_list(self.ghosts)
-        self.nodes.deny_access_list(2 + 11.5, 3 + 14, LEFT, self.ghosts)
-        self.nodes.deny_access_list(2 + 11.5, 3 + 14, RIGHT, self.ghosts)
         self.ghosts.inky.startNode.deny_access(RIGHT, self.ghosts.inky)
         self.ghosts.clyde.startNode.deny_access(LEFT, self.ghosts.clyde)
-        self.nodes.deny_access_list(12, 14, UP, self.ghosts)
-        self.nodes.deny_access_list(15, 14, UP, self.ghosts)
-        self.nodes.deny_access_list(12, 26, UP, self.ghosts)
-        self.nodes.deny_access_list(15, 26, UP, self.ghosts)
+        self.mazedata.obj.deny_ghosts_access(self.ghosts, self.nodes)
 
     # Runs once per frame. Updates game state, handles events, checks collisions,
     # and draws everything to the screen.
