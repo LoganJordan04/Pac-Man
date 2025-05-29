@@ -23,6 +23,9 @@ class GameController(object):
         # Surface used as the static background (e.g., maze backdrop)
         self.background = None
 
+        self.background_norm = None
+        self.background_flash = None
+
         # Clock to manage time between frames and limit frame rate
         self.clock = pygame.time.Clock()
 
@@ -39,6 +42,10 @@ class GameController(object):
 
         self.score = 0
         self.textgroup = TextGroup()
+
+        self.flashBG = False
+        self.flashTime = 0.2
+        self.flashTimer = 0
 
     # Restarts the game from level 0 with full lives after game over.
     def restart_game(self):
@@ -70,17 +77,26 @@ class GameController(object):
         self.start_game()
         self.textgroup.update_level(self.level)
 
-    # Creates a plain black background surface.
+    # Builds the background surface for the maze.
+    # Loads the maze layout and rotation files, constructs the tilemap.
     def set_background(self):
-        self.background = pygame.surface.Surface(SCREENSIZE).convert()
-        self.background.fill(BLACK)
+        self.background_norm = pygame.surface.Surface(SCREENSIZE).convert()
+        self.background_norm.fill(BLACK)
+
+        self.background_flash = pygame.surface.Surface(SCREENSIZE).convert()
+        self.background_flash.fill(BLACK)
+
+        self.background_norm = self.mazesprites.construct_background(self.background_norm, self.level % 5)
+        self.background_flash = self.mazesprites.construct_background(self.background_flash, 5)
+
+        self.flashBG = False
+        self.background = self.background_norm
 
     # Called once at game start. Initializes maze, Pac-Man, ghosts, and pellets.
     # Loads the maze from file, places all entities, and sets up portals and ghost house.
     def start_game(self):
-        self.set_background()
         self.mazesprites = MazeSprites("maze1.txt", "maze1_rotation.txt")
-        self.background = self.mazesprites.construct_background(self.background, self.level % 5)
+        self.set_background()
 
         # Load maze layout and create graph of nodes
         self.nodes = NodeGroup("maze1.txt")
@@ -152,6 +168,16 @@ class GameController(object):
                 self.pacman.update(dt)
         else:
             self.pacman.update(dt)
+
+        # Handle level flashing when all pellets are eaten
+        if self.flashBG:
+            self.flashTimer += dt
+            if self.flashTimer >= self.flashTime:
+                self.flashTimer = 0
+                if self.background == self.background_norm:
+                    self.background = self.background_flash
+                else:
+                    self.background = self.background_norm
 
         afterPauseMethod = self.pause.update(dt)
         if afterPauseMethod is not None:
@@ -225,7 +251,8 @@ class GameController(object):
                 self.fruit = None
 
     # Detects if Pac-Man has eaten a pellet.
-    # Removes pellet, increments counter, and triggers ghost freight mode if it's a power pellet.
+    # Removes pellet, increments counter, triggers ghost freight mode if it's a power pellet,
+    # and checks if all pellets are eaten.
     def check_pellet_events(self):
         pellet = self.pacman.eat_pellets(self.pellets.pelletList)
         if pellet:
@@ -243,6 +270,7 @@ class GameController(object):
                 self.ghosts.start_freight()
 
             if self.pellets.is_empty():
+                self.flashBG = True
                 self.hide_entities()
                 self.pause.set_pause(pauseTime=3, func=self.next_level)
 
