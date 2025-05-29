@@ -10,6 +10,7 @@ from pauser import Pause
 from text import TextGroup
 from sprites import LifeSprites
 from sprites import MazeSprites
+from mazedata import MazeData
 
 
 # Main game controller class: handles setup, updates, input, collisions, and rendering
@@ -20,14 +21,19 @@ class GameController(object):
         # Create the main display surface using screen size defined in constants.py
         self.screen = pygame.display.set_mode(SCREENSIZE, 0, 32)
 
-        # Surface used as the static background (e.g., maze backdrop)
+        # Sets the default maze background
         self.background = None
+        self.background_norm = None
+        self.background_flash = None
 
         # Clock to manage time between frames and limit frame rate
         self.clock = pygame.time.Clock()
 
+        self.mazedata = MazeData()
+
         # Bonus fruit object (appears temporarily)
         self.fruit = None
+        self.fruitCaptured = []
 
         # Pause manager for delays and manual pauses
         self.pause = Pause(True)
@@ -40,12 +46,19 @@ class GameController(object):
         self.score = 0
         self.textgroup = TextGroup()
 
+        # Maze flash (when completing a level) and the active timer
+        self.flashBG = False
+        self.flashTime = 0.2
+        self.flashTimer = 0
+
+
     # Restarts the game from level 0 with full lives after game over.
     def restart_game(self):
         self.lives = 5
         self.level = 0
         self.pause.paused = True
         self.fruit = None
+        self.fruitCaptured = []
         self.start_game()
         self.score = 0
         self.textgroup.update_score(self.score)
@@ -70,56 +83,59 @@ class GameController(object):
         self.start_game()
         self.textgroup.update_level(self.level)
 
-    # Creates a plain black background surface.
+    # Builds the background surface for the maze.
+    # Loads the maze layout and rotation files, constructs the tilemap.
     def set_background(self):
-        self.background = pygame.surface.Surface(SCREENSIZE).convert()
-        self.background.fill(BLACK)
+        self.background_norm = pygame.surface.Surface(SCREENSIZE).convert()
+        self.background_norm.fill(BLACK)
+
+        self.background_flash = pygame.surface.Surface(SCREENSIZE).convert()
+        self.background_flash.fill(BLACK)
+
+        self.background_norm = self.mazesprites.construct_background(self.background_norm, self.level % 5)
+        self.background_flash = self.mazesprites.construct_background(self.background_flash, 5)
+
+        self.flashBG = False
+        self.background = self.background_norm
 
     # Called once at game start. Initializes maze, Pac-Man, ghosts, and pellets.
     # Loads the maze from file, places all entities, and sets up portals and ghost house.
     def start_game(self):
+        self.mazedata.load_maze(self.level)
+        self.mazesprites = MazeSprites(self.mazedata.obj.name + ".txt", self.mazedata.obj.name + "_rotation.txt")
         self.set_background()
-        self.mazesprites = MazeSprites("maze1.txt", "maze1_rotation.txt")
-        self.background = self.mazesprites.construct_background(self.background, self.level % 5)
 
         # Load maze layout and create graph of nodes
-        self.nodes = NodeGroup("maze1.txt")
+        self.nodes = NodeGroup(self.mazedata.obj.name+".txt")
 
         # Link left and right edge nodes as teleport portals
-        self.nodes.set_portal_pair((0, 17), (27, 17))
+        self.mazedata.obj.set_portal_pairs(self.nodes)
 
         # Create and connect nodes for the ghost house in the maze
-        homekey = self.nodes.create_home_nodes(11.5, 14)
-        self.nodes.connect_home_nodes(homekey, (12, 14), LEFT)
-        self.nodes.connect_home_nodes(homekey, (15, 14), RIGHT)
+        self.mazedata.obj.connect_home_nodes(self.nodes)
 
-        # Initialize Pac-Man at a specific node
-        self.pacman = Pacman(self.nodes.get_node_from_tiles(15, 26))
+        # Initialize Pac-Man at a specific start node
+        self.pacman = Pacman(self.nodes.get_node_from_tiles(*self.mazedata.obj.pacmanStart))
 
         # Load pellets based on maze layout
-        self.pellets = PelletGroup("maze1.txt")
+        self.pellets = PelletGroup(self.mazedata.obj.name+".txt")
 
         # Initialize all four ghosts and assign starting positions
         self.ghosts = GhostGroup(self.nodes.get_start_temp_node(), self.pacman)
-        self.ghosts.blinky.set_start_node(self.nodes.get_node_from_tiles(2 + 11.5, 0 + 14))
-        self.ghosts.pinky.set_start_node(self.nodes.get_node_from_tiles(2 + 11.5, 3 + 14))
-        self.ghosts.inky.set_start_node(self.nodes.get_node_from_tiles(0 + 11.5, 3 + 14))
-        self.ghosts.clyde.set_start_node(self.nodes.get_node_from_tiles(4 + 11.5, 3 + 14))
+        self.ghosts.pinky.set_start_node(self.nodes.get_node_from_tiles(*self.mazedata.obj.add_offset(2, 3)))
+        self.ghosts.inky.set_start_node(self.nodes.get_node_from_tiles(*self.mazedata.obj.add_offset(0, 3)))
+        self.ghosts.clyde.set_start_node(self.nodes.get_node_from_tiles(*self.mazedata.obj.add_offset(4, 3)))
+        self.ghosts.blinky.set_start_node(self.nodes.get_node_from_tiles(*self.mazedata.obj.add_offset(2, 0)))
 
         # Set spawn target (ghost house center) for ghosts when eaten
-        self.ghosts.set_spawn_node(self.nodes.get_node_from_tiles(2 + 11.5, 3 + 14))
+        self.ghosts.set_spawn_node(self.nodes.get_node_from_tiles(*self.mazedata.obj.add_offset(2, 3)))
 
         # Restrict access to ghost house or junctions as needed
         self.nodes.deny_home_access(self.pacman)
         self.nodes.deny_home_access_list(self.ghosts)
-        self.nodes.deny_access_list(2 + 11.5, 3 + 14, LEFT, self.ghosts)
-        self.nodes.deny_access_list(2 + 11.5, 3 + 14, RIGHT, self.ghosts)
         self.ghosts.inky.startNode.deny_access(RIGHT, self.ghosts.inky)
         self.ghosts.clyde.startNode.deny_access(LEFT, self.ghosts.clyde)
-        self.nodes.deny_access_list(12, 14, UP, self.ghosts)
-        self.nodes.deny_access_list(15, 14, UP, self.ghosts)
-        self.nodes.deny_access_list(12, 26, UP, self.ghosts)
-        self.nodes.deny_access_list(15, 26, UP, self.ghosts)
+        self.mazedata.obj.deny_ghosts_access(self.ghosts, self.nodes)
 
     # Runs once per frame. Updates game state, handles events, checks collisions,
     # and draws everything to the screen.
@@ -134,7 +150,6 @@ class GameController(object):
 
         if not self.pause.paused:
             # Update entity movement and animation
-            self.pacman.update(dt)
             self.ghosts.update(dt)
             if self.fruit is not None:
                 self.fruit.update(dt)
@@ -147,6 +162,22 @@ class GameController(object):
 
             # Handle fruit consumption and spawning
             self.check_fruit_events()
+
+        if self.pacman.alive:
+            if not self.pause.paused:
+                self.pacman.update(dt)
+        else:
+            self.pacman.update(dt)
+
+        # Handle level flashing when all pellets are eaten
+        if self.flashBG:
+            self.flashTimer += dt
+            if self.flashTimer >= self.flashTime:
+                self.flashTimer = 0
+                if self.background == self.background_norm:
+                    self.background = self.background_flash
+                else:
+                    self.background = self.background_norm
 
         afterPauseMethod = self.pause.update(dt)
         if afterPauseMethod is not None:
@@ -215,12 +246,23 @@ class GameController(object):
             if self.pacman.collide_check(self.fruit):
                 self.update_score(self.fruit.points)
                 self.textgroup.add_text(str(self.fruit.points), WHITE, self.fruit.position.x, self.fruit.position.y, 8, time=1)
+
+                # Capturing the fruit
+                fruitCaptured = False
+                for fruit in self.fruitCaptured:
+                    if fruit.get_offset() == self.fruit.image.get_offset():
+                        fruitCaptured = True
+                        break
+                if not fruitCaptured:
+                    self.fruitCaptured.append(self.fruit.image)
+
                 self.fruit = None
             elif self.fruit.destroy:
                 self.fruit = None
 
     # Detects if Pac-Man has eaten a pellet.
-    # Removes pellet, increments counter, and triggers ghost freight mode if it's a power pellet.
+    # Removes pellet, increments counter, triggers ghost freight mode if it's a power pellet,
+    # and checks if all pellets are eaten.
     def check_pellet_events(self):
         pellet = self.pacman.eat_pellets(self.pellets.pelletList)
         if pellet:
@@ -238,6 +280,7 @@ class GameController(object):
                 self.ghosts.start_freight()
 
             if self.pellets.is_empty():
+                self.flashBG = True
                 self.hide_entities()
                 self.pause.set_pause(pauseTime=3, func=self.next_level)
 
@@ -252,7 +295,7 @@ class GameController(object):
         self.ghosts.hide()
 
     # Draws all game elements to the screen each frame:
-    # background, maze, pellets, fruit, Pac-Man, and ghosts.
+    # background, maze, pellets, fruit, Pac-Man, ghosts, and lives.
     def render(self):
         self.screen.blit(self.background, (0, 0))
         self.pellets.render(self.screen)
@@ -269,6 +312,11 @@ class GameController(object):
             x = self.lifesprites.images[i].get_width() * i
             y = SCREENHEIGHT - self.lifesprites.images[i].get_height()
             self.screen.blit(self.lifesprites.images[i], (x, y))
+
+        for i in range(len(self.fruitCaptured)):
+            x = SCREENWIDTH - self.fruitCaptured[i].get_width() * (i + 1)
+            y = SCREENHEIGHT - self.fruitCaptured[i].get_height()
+            self.screen.blit(self.fruitCaptured[i], (x, y))
 
         # Refresh the screen with the new frame
         pygame.display.update()

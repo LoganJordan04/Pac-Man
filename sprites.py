@@ -7,6 +7,9 @@ from animation import Animator
 BASETILEWIDTH = 16
 BASETILEHEIGHT = 16
 
+# Constant for death animation key
+DEATH = 5
+
 
 # Spritesheet class handles loading and extracting individual sprite images from the full spritesheet.
 class Spritesheet(object):
@@ -50,36 +53,36 @@ class PacmanSprites(Spritesheet):
 
     # Returns a specific Pac-Man sprite at grid (x, y) on the sheet.
     def get_image(self, x, y):
-        return Spritesheet.get_image(self, x, y, 2*TILEWIDTH, 2*TILEHEIGHT)
+        return super().get_image(x, y, 2 * TILEWIDTH, 2 * TILEHEIGHT)
 
-    # Assign animations for movement in each direction
+    # Define animation sequences for Pac-Man's directional movement and death
     def define_animations(self):
         self.animations[LEFT] = Animator(((8, 0), (0, 0), (0, 2), (0, 0)))
         self.animations[RIGHT] = Animator(((10, 0), (2, 0), (2, 2), (2, 0)))
         self.animations[UP] = Animator(((10, 2), (6, 0), (6, 2), (6, 0)))
         self.animations[DOWN] = Animator(((8, 2), (4, 0), (4, 2), (4, 0)))
 
-    # Update Pac-Man's animation frame based on direction
+        self.animations[DEATH] = Animator(
+            ((0, 12), (2, 12), (4, 12), (6, 12), (8, 12), (10, 12),
+             (12, 12), (14, 12), (16, 12), (18, 12), (20, 12)),
+            speed=6, loop=False
+        )
+
+    # Updates the current animation frame based on movement direction or death
     def update(self, dt):
-        if self.entity.direction == LEFT:
-            self.entity.image = self.get_image(*self.animations[LEFT].update(dt))
-            self.stopimage = (8, 0)
-        elif self.entity.direction == RIGHT:
-            self.entity.image = self.get_image(*self.animations[RIGHT].update(dt))
-            self.stopimage = (10, 0)
-        elif self.entity.direction == DOWN:
-            self.entity.image = self.get_image(*self.animations[DOWN].update(dt))
-            self.stopimage = (8, 2)
-        elif self.entity.direction == UP:
-            self.entity.image = self.get_image(*self.animations[UP].update(dt))
-            self.stopimage = (10, 2)
-        elif self.entity.direction == STOP:
-            self.entity.image = self.get_image(*self.stopimage)
+        if self.entity.alive:
+            if self.entity.direction in self.animations:
+                self.entity.image = self.get_image(*self.animations[self.entity.direction].update(dt))
+                self.stopimage = self.animations[self.entity.direction].frames[0]
+            elif self.entity.direction == STOP:
+                self.entity.image = self.get_image(*self.stopimage)
+        else:
+            self.entity.image = self.get_image(*self.animations[DEATH].update(dt))
 
     # Reset all animations to initial state
     def reset(self):
-        for key in list(self.animations.keys()):
-            self.animations[key].reset()
+        for anim in self.animations.values():
+            anim.reset()
 
 
 # Handles sprite logic for the four ghost characters.
@@ -106,7 +109,7 @@ class GhostSprites(Spritesheet):
     def get_image(self, x, y):
         return super().get_image(x, y, 2 * TILEWIDTH, 2 * TILEHEIGHT)
 
-    # Update the ghost's animation frame based on direction
+    # Update the ghost's animation frame based on direction and mode
     def update(self, dt):
         x = self.x[self.entity.name]
 
@@ -122,6 +125,7 @@ class GhostSprites(Spritesheet):
 
         elif self.entity.mode.current == FREIGHT:
             self.entity.image = self.get_image(10, 4)
+
         elif self.entity.mode.current == SPAWN:
             if self.entity.direction == LEFT:
                 self.entity.image = self.get_image(8, 8)
@@ -133,16 +137,19 @@ class GhostSprites(Spritesheet):
                 self.entity.image = self.get_image(8, 4)
 
 
-# Handles sprite loading for the fruit bonus item.
+# Loads the correct fruit sprite based on current level (looped).
 class FruitSprites(Spritesheet):
-    def __init__(self, entity):
+    def __init__(self, entity, level):
         super().__init__()
         self.entity = entity
-        self.entity.image = self.get_start_image()
+
+        # Sprites vary (cherry, strawberry, etc.) based on modulo of level index.
+        self.fruits = {0: (16, 8), 1: (18, 8), 2: (20, 8), 3: (16, 10), 4: (18, 10), 5: (20, 10)}
+        self.entity.image = self.get_start_image(level % len(self.fruits))
 
     # Loads the default fruit sprite from the sheet.
-    def get_start_image(self):
-        return self.get_image(16, 8)
+    def get_start_image(self, key):
+        return self.get_image(*self.fruits[key])
 
     # Returns a specific fruit sprite from tile (x, y).
     def get_image(self, x, y):
@@ -152,51 +159,53 @@ class FruitSprites(Spritesheet):
 # Displays Pac-Man lives as icons on screen.
 class LifeSprites(Spritesheet):
     def __init__(self, numlives):
-        Spritesheet.__init__(self)
+        super().__init__()
         self.reset_lives(numlives)
 
     # Removes one life icon (e.g., after player dies).
     def remove_image(self):
-        if len(self.images) > 0:
+        if self.images:
             self.images.pop(0)
 
     # Resets the life icons to the specified number.
     def reset_lives(self, numlives):
-        self.images = []
-        for i in range(numlives):
-            self.images.append(self.get_image(0,0))
+        self.images = [self.get_image(0, 0) for _ in range(numlives)]
 
     # Loads a 2x2 tile sprite for Pac-Man's life icon.
     def get_image(self, x, y):
-        return Spritesheet.get_image(self, x, y, 2*TILEWIDTH, 2*TILEHEIGHT)
+        return super().get_image(x, y, 2 * TILEWIDTH, 2 * TILEHEIGHT)
 
 
+# Builds and renders the maze tileset from level layout files
 class MazeSprites(Spritesheet):
     def __init__(self, mazefile, rotfile):
-        Spritesheet.__init__(self)
+        super().__init__()
         self.data = self.read_maze_file(mazefile)
         self.rotdata = self.read_maze_file(rotfile)
 
     def get_image(self, x, y):
-        return Spritesheet.get_image(self, x, y, TILEWIDTH, TILEHEIGHT)
+        return super().get_image(x, y, TILEWIDTH, TILEHEIGHT)
 
+    # Reads maze layout or rotation info from file
     def read_maze_file(self, mazefile):
         return np.loadtxt(mazefile, dtype='<U1')
 
+    # Assembles the background tile image from layout and rotation maps
     def construct_background(self, background, y):
-        for row in list(range(self.data.shape[0])):
-            for col in list(range(self.data.shape[1])):
+        for row in range(self.data.shape[0]):
+            for col in range(self.data.shape[1]):
                 if self.data[row][col].isdigit():
                     x = int(self.data[row][col]) + 12
                     sprite = self.get_image(x, y)
                     rotval = int(self.rotdata[row][col])
                     sprite = self.rotate(sprite, rotval)
-                    background.blit(sprite, (col*TILEWIDTH, row*TILEHEIGHT))
+                    background.blit(sprite, (col * TILEWIDTH, row * TILEHEIGHT))
                 elif self.data[row][col] == '=':
                     sprite = self.get_image(10, 8)
-                    background.blit(sprite, (col*TILEWIDTH, row*TILEHEIGHT))
+                    background.blit(sprite, (col * TILEWIDTH, row * TILEHEIGHT))
 
         return background
 
+    # Rotates a tile image by 90-degree increments
     def rotate(self, sprite, value):
         return pygame.transform.rotate(sprite, value * 90)

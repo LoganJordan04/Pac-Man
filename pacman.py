@@ -52,6 +52,8 @@ class Pacman(Entity):
         self.direction = LEFT
         self.set_between_nodes(LEFT)
         self.alive = True
+        self.image = self.sprites.get_start_image()
+        self.sprites.reset()
 
     # Handles Pac-Man's death by stopping movement and marking him as not alive.
     def die(self):
