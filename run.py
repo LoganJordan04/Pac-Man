@@ -21,7 +21,7 @@ class GameController(object):
 
         # Create the main display surface using screen size defined in constants.py
         self.screen = pygame.display.set_mode(SCREENSIZE, 0, 32)
-        pygame.display.set_caption("PAC-MAN")
+        pygame.display.set_caption("PAC-MEN")
 
         # Sets the default maze background
         self.background = None

@@ -5,6 +5,7 @@ from pygame.locals import *
 from constants import *
 from vector import Vector2
 from text import Text
+from sprites import Spritesheet
 
 
 class HighScore:
@@ -47,67 +48,71 @@ class MenuScreen:
         self.high_score_manager = HighScore()
         self.setup_text()
         self.blink_timer = 0
-        # Blink every 1 second
-        self.blink_speed = 1
+        # Blink every 0.5 seconds
+        self.blink_speed = 0.5
         self.show_start_text = True
 
     # Create all menu text elements
     def setup_text(self):
         self.texts = []
 
-        # load your logo.png from the same folder as menu.py
+        # Load the spritesheet once so we can render the ghosts
+        self.spritesheet = Spritesheet()
+
         logo_path = os.path.join(os.path.dirname(__file__), "logo.png")
         self.logo_image = pygame.image.load(logo_path).convert_alpha()
-        # optional: scale it to fit (e.g. width=12 tiles, height=3 tiles)
-        logo_w = int(12 * TILEWIDTH)
-        logo_h = int(3 * TILEHEIGHT)
+        logo_w = int(18 * TILEWIDTH)
+        logo_h = int(4 * TILEHEIGHT)
         self.logo_image = pygame.transform.scale(self.logo_image, (logo_w, logo_h))
-        # position it at 8.5 tiles over, 6 tiles down
-        self.logo_pos = (8.5 * TILEWIDTH, 6 * TILEHEIGHT)
+        self.logo_pos = (4.75 * TILEWIDTH, 2 * TILEHEIGHT)
 
-        # 2) High Score (already in your original)
+        self.texts.append(Text("CHARACTER / NICKNAME", WHITE, 7.25 * TILEWIDTH, 8.5 * TILEHEIGHT, int(TILEHEIGHT * 0.8)))
+
+        ghost_y = 10.5 * TILEHEIGHT
+        self.texts.append(Text("-SHADOW", RED, 8 * TILEWIDTH, ghost_y, int(TILEHEIGHT * 0.8)))
+        self.texts.append(Text('"BLINKY"', RED, 16 * TILEWIDTH, ghost_y, int(TILEHEIGHT * 0.8)))
+        blinky_img = self.spritesheet.get_image(0, 10, 2 * TILEWIDTH, 2 * TILEHEIGHT)
+
+        ghost_y += 2.2 * TILEHEIGHT
+        self.texts.append(Text("-SPEEDY", PINK, 8 * TILEWIDTH, ghost_y, int(TILEHEIGHT * 0.8)))
+        self.texts.append(Text('"PINKY"', PINK, 16 * TILEWIDTH, ghost_y, int(TILEHEIGHT * 0.8)))
+        pinky_img = self.spritesheet.get_image(2, 10, 2 * TILEWIDTH, 2 * TILEHEIGHT)
+
+        ghost_y += 2.2 * TILEHEIGHT
+        self.texts.append(Text("-BASHFUL", TEAL, 8 * TILEWIDTH, ghost_y, int(TILEHEIGHT * 0.8)))
+        self.texts.append(Text('"INKY"', TEAL, 16 * TILEWIDTH, ghost_y, int(TILEHEIGHT * 0.8)))
+        inky_img  = self.spritesheet.get_image(4, 10, 2 * TILEWIDTH, 2 * TILEHEIGHT)
+
+        ghost_y += 2.2 * TILEHEIGHT
+        self.texts.append(Text("-POKEY", ORANGE, 8 * TILEWIDTH, ghost_y, int(TILEHEIGHT * 0.8)))
+        self.texts.append(Text('"CLYDE"', ORANGE, 16 * TILEWIDTH, ghost_y, int(TILEHEIGHT * 0.8)))
+        clyde_img = self.spritesheet.get_image(6, 10, 2 * TILEWIDTH, 2 * TILEHEIGHT)
+
+        # Store all ghost images alongside their Y-coordinates
+        self.ghost_sprites = [
+            (blinky_img, (5 * TILEWIDTH, 9.75 * TILEHEIGHT)),
+            (pinky_img, (5 * TILEWIDTH, 11.95 * TILEHEIGHT)),
+            (inky_img, (5 * TILEWIDTH, 14.15 * TILEHEIGHT)),
+            (clyde_img, (5 * TILEWIDTH, 16.35 * TILEHEIGHT)),
+        ]
+
+        points_y = 20 * TILEHEIGHT
+        self.texts.append(Text("10 PTS", WHITE, 8 * TILEWIDTH, points_y, int(TILEHEIGHT * 0.75)))
+        self.texts.append(Text("50 PTS", WHITE, 16 * TILEWIDTH, points_y, int(TILEHEIGHT * 0.75)))
+
         high_score = self.high_score_manager.get_high_score()
-        self.texts.append(Text("HIGH SCORE", WHITE, 9 * TILEWIDTH, 9 * TILEHEIGHT, TILEHEIGHT))
-        self.texts.append(Text(str(high_score).zfill(8), WHITE, 9 * TILEWIDTH, 10.5 * TILEHEIGHT, TILEHEIGHT))
+        self.texts.append(Text("HIGH SCORE", WHITE, 9 * TILEWIDTH, 24 * TILEHEIGHT, TILEHEIGHT))
+        self.texts.append(Text(str(high_score).zfill(8), WHITE, 9 * TILEWIDTH, 25.25 * TILEHEIGHT, TILEHEIGHT))
 
-        # 3) Character / Nickname header
-        self.texts.append(Text("CHARACTER / NICKNAME", WHITE, 6 * TILEWIDTH, 13 * TILEHEIGHT, int(TILEHEIGHT * 0.8)))
+        self.start_text = Text(
+            "PRESS SPACEBAR", YELLOW, 5.75 * TILEWIDTH, 29 * TILEHEIGHT, int(TILEHEIGHT * 1.2)
+        )
 
-        # 4) Ghost names updated to original Japanese
-        ghost_y = 15 * TILEHEIGHT
-        self.texts.append(Text("OIKAKE", RED,    7 * TILEWIDTH,  ghost_y, int(TILEHEIGHT * 0.8)))
-        self.texts.append(Text('"AKABEI"', RED,  15 * TILEWIDTH, ghost_y, int(TILEHEIGHT * 0.8)))
-
-        ghost_y += 1.5 * TILEHEIGHT
-        self.texts.append(Text("MACHIBUSE", PINK, 7 * TILEWIDTH,  ghost_y, int(TILEHEIGHT * 0.8)))
-        self.texts.append(Text('"PINKY"', PINK,   15 * TILEWIDTH, ghost_y, int(TILEHEIGHT * 0.8)))
-
-        ghost_y += 1.5 * TILEHEIGHT
-        self.texts.append(Text("KIMAGURE", TEAL,   7 * TILEWIDTH,  ghost_y, int(TILEHEIGHT * 0.8)))
-        self.texts.append(Text('"AOSUKE"', TEAL,   15 * TILEWIDTH, ghost_y, int(TILEHEIGHT * 0.8)))
-
-        ghost_y += 1.5 * TILEHEIGHT
-        self.texts.append(Text("OTOBOKE", ORANGE,  7 * TILEWIDTH,  ghost_y, int(TILEHEIGHT * 0.8)))
-        self.texts.append(Text('"GUZUTA"', ORANGE, 15 * TILEWIDTH, ghost_y, int(TILEHEIGHT * 0.8)))
-
-        # 5) Point values
-        points_y = 22 * TILEHEIGHT
-        self.texts.append(Text("10 PTS", WHITE,  7 * TILEWIDTH,  points_y, int(TILEHEIGHT * 0.8)))
-        self.texts.append(Text("50 PTS", WHITE, 15 * TILEWIDTH,  points_y, int(TILEHEIGHT * 0.8)))
-
-        # 6) namco credit at very bottom, centered
         self.texts.append(Text(
-            "namco", PINK,
-            (NCOLS / 2) * TILEWIDTH, 28 * TILEHEIGHT,
-            int(TILEHEIGHT * 1)
+            "PROFESSIONAL BODYBUILDERS", PINK, 4.75 * TILEWIDTH, 33 * TILEHEIGHT, int(TILEHEIGHT * 0.8)
         ))
 
-        # 7) Blinking “PRESS SPACEBAR” prompt (replaces CREDIT 0)
-        self.start_text = Text(
-            "PRESS SPACEBAR", YELLOW,
-            (NCOLS / 2) * TILEWIDTH, 28 * TILEHEIGHT,
-            int(TILEHEIGHT * 0.9)
-        )
+
 
     # Update menu animations
     def update(self, dt):
@@ -134,12 +139,21 @@ class MenuScreen:
         # Clear screen with black
         self.screen.fill(BLACK)
 
-        # 2) draw your logo
+        # Draw the logo
         self.screen.blit(self.logo_image, self.logo_pos)
+
+        # Draw ghost sprites
+        for ghost_img, pos in self.ghost_sprites:
+            self.screen.blit(ghost_img, pos)
 
         # Draw all text
         for text in self.texts:
             text.render(self.screen)
+
+        # Draw the pellets for points
+        points_y = 20.35 * TILEHEIGHT
+        pygame.draw.circle(self.screen, WHITE, (7.25 * TILEWIDTH, points_y), int(2 * TILEWIDTH / 16))
+        pygame.draw.circle(self.screen, WHITE, (14.75 * TILEWIDTH, points_y), int(8 * TILEWIDTH / 16))
 
         # Draw blinking start text
         if self.show_start_text:
