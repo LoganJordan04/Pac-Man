@@ -11,6 +11,7 @@ from text import TextGroup
 from sprites import LifeSprites
 from sprites import MazeSprites
 from mazedata import MazeData
+from menu import MenuScreen, GameState, HighScoreScreen
 
 
 # Main game controller class: handles setup, updates, input, collisions, and rendering
@@ -20,6 +21,7 @@ class GameController(object):
 
         # Create the main display surface using screen size defined in constants.py
         self.screen = pygame.display.set_mode(SCREENSIZE, 0, 32)
+        pygame.display.set_caption("PAC-MAN")
 
         # Sets the default maze background
         self.background = None
@@ -28,6 +30,11 @@ class GameController(object):
 
         # Clock to manage time between frames and limit frame rate
         self.clock = pygame.time.Clock()
+
+        # Game state management
+        self.game_state = GameState()
+        self.menu_screen = MenuScreen(self.screen)
+        self.high_score_screen = None
 
         self.mazedata = MazeData()
 
@@ -50,6 +57,9 @@ class GameController(object):
         self.flashBG = False
         self.flashTime = 0.2
         self.flashTimer = 0
+
+        # Flag to track if game has been initialized
+        self.game_initialized = False
 
 
     # Restarts the game from level 0 with full lives after game over.
@@ -137,11 +147,41 @@ class GameController(object):
         self.ghosts.clyde.startNode.deny_access(LEFT, self.ghosts.clyde)
         self.mazedata.obj.deny_ghosts_access(self.ghosts, self.nodes)
 
+        self.game_initialized = True
+
     # Runs once per frame. Updates game state, handles events, checks collisions,
     # and draws everything to the screen.
     def update(self):
         # Delta time in seconds (30 FPS)
         dt = self.clock.tick(30) / 1000.0
+
+        # Handle different game states
+        if self.game_state.is_menu():
+            self.update_menu(dt)
+        elif self.game_state.is_high_score():
+            self.update_high_score_screen(dt)
+        elif self.game_state.is_playing():
+            self.update_game(dt)
+
+        # Handle user inputs or system quit events
+        self.check_events()
+
+        # Draw updated frame to screen
+        self.render()
+
+    def update_menu(self, dt):
+        self.menu_screen.update(dt)
+
+    def update_high_score_screen(self, dt):
+        if self.high_score_screen and self.high_score_screen.update(dt):
+            # High score screen finished, return to menu
+            self.game_state.set_state(GameState.MENU)
+            self.high_score_screen = None
+
+    # Update game logic
+    def update_game(self, dt):
+        if not self.game_initialized:
+            return
 
         self.textgroup.update(dt)
 
@@ -183,12 +223,6 @@ class GameController(object):
         if afterPauseMethod is not None:
             afterPauseMethod()
 
-        # Handle user inputs or system quit events
-        self.check_events()
-
-        # Draw updated frame to screen
-        self.render()
-
     def update_score(self, points):
         self.score += points
         self.textgroup.update_score(self.score)
@@ -199,15 +233,31 @@ class GameController(object):
             if event.type == QUIT:
                 exit()
             elif event.type == KEYDOWN:
-                if event.key == K_SPACE:
-                    if self.pacman.alive:
-                        self.pause.set_pause(playerPaused=True)
-                        if not self.pause.paused:
-                            self.textgroup.hide_text()
-                            self.show_entities()
+                if self.game_state.is_menu():
+                    if self.menu_screen.handle_input(event):
+                        # Start the game
+                        self.game_state.set_state(GameState.PLAYING)
+                        if not self.game_initialized:
+                            self.start_game()
                         else:
-                            self.textgroup.show_text(PAUSETXT)
-                            self.hide_entities()
+                            self.restart_game()
+                elif self.game_state.is_playing():
+                    if event.key == K_SPACE:
+                        if self.pacman.alive:
+                            self.pause.set_pause(playerPaused=True)
+                            if not self.pause.paused:
+                                self.textgroup.hide_text()
+                                self.show_entities()
+                            else:
+                                self.textgroup.show_text(PAUSETXT)
+                                self.hide_entities()
+                    elif event.key == K_ESCAPE:
+                        # Return to menu
+                        self.game_state.set_state(GameState.MENU)
+                elif self.game_state.is_high_score():
+                    # Skip high score screen on any key press
+                    self.game_state.set_state(GameState.MENU)
+                    self.high_score_screen = None
 
     # Detect collisions between Pac-Man and ghosts.
     # If a ghost is in freight mode, send it back to the ghost house (spawn mode).
@@ -230,10 +280,26 @@ class GameController(object):
                         self.pacman.die()
                         self.ghosts.hide()
                         if self.lives <= 0:
-                            self.textgroup.show_text(GAMEOVERTXT)
-                            self.pause.set_pause(pauseTime=3, func=self.restart_game)
+                            # Game over - check for high score
+                            self.end_game()
                         else:
                             self.pause.set_pause(pauseTime=3, func=self.reset_level)
+
+    # Handle game over logic
+    def end_game(self):
+        # Check if it's a new high score
+        if self.menu_screen.update_high_score(self.score):
+            # New high score
+            self.high_score_screen = HighScoreScreen(self.screen, self.score)
+            self.game_state.set_state(GameState.HIGH_SCORE)
+        else:
+            # Regular game over
+            self.textgroup.show_text(GAMEOVERTXT)
+            self.pause.set_pause(pauseTime=3, func=self.return_to_menu)
+
+    # Return to the main menu
+    def return_to_menu(self):
+        self.game_state.set_state(GameState.MENU)
 
     # Controls fruit appearance and collision with Pac-Man.
     # Fruit appears after eating 50 or 140 pellets.
@@ -297,6 +363,23 @@ class GameController(object):
     # Draws all game elements to the screen each frame:
     # background, maze, pellets, fruit, Pac-Man, ghosts, and lives.
     def render(self):
+        if self.game_state.is_menu():
+            self.menu_screen.render()
+        elif self.game_state.is_high_score():
+            if self.high_score_screen:
+                self.high_score_screen.render()
+        elif self.game_state.is_playing():
+            self.render_game()
+
+        # Refresh the screen with the new frame
+        pygame.display.update()
+
+    # Render the game screen
+    def render_game(self):
+        if not self.game_initialized:
+            self.screen.fill(BLACK)
+            return
+
         self.screen.blit(self.background, (0, 0))
         self.pellets.render(self.screen)
 
@@ -318,14 +401,10 @@ class GameController(object):
             y = SCREENHEIGHT - self.fruitCaptured[i].get_height()
             self.screen.blit(self.fruitCaptured[i], (x, y))
 
-        # Refresh the screen with the new frame
-        pygame.display.update()
-
 
 # Entry point for the game: creates and starts the main loop
 if __name__ == "__main__":
     game = GameController()
-    game.start_game()
 
     # Main loop runs until manually exited
     while True:
