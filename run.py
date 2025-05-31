@@ -61,7 +61,6 @@ class GameController(object):
         # Flag to track if game has been initialized
         self.game_initialized = False
 
-
     # Restarts the game from level 0 with full lives after game over.
     def restart_game(self):
         self.lives = 5
@@ -83,6 +82,11 @@ class GameController(object):
         self.ghosts.reset()
         self.fruit = None
         self.textgroup.show_text(READYTXT)
+
+        # Pause when restarting
+        self.pause.timer = 0
+        self.pause.pauseTime = 3
+        self.pause.func = self.show_entities
 
     # Called when all pellets are eaten.
     # Advances to the next level and resets game entities.
@@ -241,6 +245,16 @@ class GameController(object):
                             self.start_game()
                         else:
                             self.restart_game()
+
+                        self.textgroup.show_text(READYTXT)
+                        self.hide_entities()
+
+                        # Set up a 3-second timed pause
+                        self.pause.timer = 0
+                        self.pause.pauseTime = 3
+                        self.pause.func = self.show_entities
+                        self.pause.paused = True
+
                 elif self.game_state.is_playing():
                     if event.key == K_SPACE:
                         if self.pacman.alive:
@@ -354,6 +368,7 @@ class GameController(object):
     def show_entities(self):
         self.pacman.visible = True
         self.ghosts.show()
+        self.textgroup.hide_text()
 
     # Hides all entities (used during pause or transitions).
     def hide_entities(self):

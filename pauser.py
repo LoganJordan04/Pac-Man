@@ -26,10 +26,7 @@ class Pause(object):
                 return self.func
         return None
 
-    # Initiates a pause. You can specify:
-    # - playerPaused: Manual pause triggered by player (e.g. key press)
-    # - pauseTime: Duration of timed pause in seconds
-    # - func: Optional callback to execute once pause ends
+    # Initiates a pause.
     def set_pause(self, playerPaused=False, pauseTime=None, func=None):
         self.timer = 0
         self.func = func

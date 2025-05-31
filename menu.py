@@ -102,7 +102,7 @@ class MenuScreen:
 
         high_score = self.high_score_manager.get_high_score()
         self.texts.append(Text("HIGH SCORE", WHITE, 9 * TILEWIDTH, 24 * TILEHEIGHT, TILEHEIGHT))
-        self.texts.append(Text(str(high_score).zfill(8), WHITE, 9 * TILEWIDTH, 25.25 * TILEHEIGHT, TILEHEIGHT))
+        self.texts.append(Text(str(high_score).zfill(8), WHITE, 10 * TILEWIDTH, 25.25 * TILEHEIGHT, TILEHEIGHT))
 
         self.start_text = Text(
             "PRESS SPACEBAR", YELLOW, 5.75 * TILEWIDTH, 29 * TILEHEIGHT, int(TILEHEIGHT * 1.2)
@@ -111,8 +111,6 @@ class MenuScreen:
         self.texts.append(Text(
             "PROFESSIONAL BODYBUILDERS", PINK, 4.75 * TILEWIDTH, 33 * TILEHEIGHT, int(TILEHEIGHT * 0.8)
         ))
-
-
 
     # Update menu animations
     def update(self, dt):
@@ -209,7 +207,7 @@ class HighScoreScreen:
         self.texts = []
         self.texts.append(Text("NEW HIGH SCORE!", YELLOW, 6 * TILEWIDTH, 12 * TILEHEIGHT, int(TILEHEIGHT * 1.2)))
         self.texts.append(
-            Text(str(self.new_score).zfill(8), WHITE, 9 * TILEWIDTH, 16 * TILEHEIGHT, int(TILEHEIGHT * 1.5)))
+            Text(str(self.new_score).zfill(8), WHITE, 8.5 * TILEWIDTH, 16 * TILEHEIGHT, int(TILEHEIGHT * 1.5)))
         self.texts.append(Text("CONGRATULATIONS!", WHITE, 6.5 * TILEWIDTH, 20 * TILEHEIGHT, TILEHEIGHT))
 
     def update(self, dt):
