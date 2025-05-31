@@ -1,5 +1,4 @@
 import pygame
-import os
 from constants import *
 import numpy as np
 from animation import Animator

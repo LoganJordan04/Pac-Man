@@ -1,4 +1,3 @@
-import pygame
 from entity import Entity
 from constants import *
 from sprites import FruitSprites

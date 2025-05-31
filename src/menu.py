@@ -1,9 +1,7 @@
 import pygame
 import json
-import os
 from pygame.locals import *
 from constants import *
-from vector import Vector2
 from text import Text
 from sprites import Spritesheet
 

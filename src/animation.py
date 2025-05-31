@@ -1,6 +1,3 @@
-from constants import *
-
-
 # Manages frame-based animations by cycling through a list of frames over time.
 class Animator(object):
     def __init__(self, frames=[], speed=20, loop=True):
