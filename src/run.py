@@ -12,6 +12,7 @@ from sprites import LifeSprites
 from sprites import MazeSprites
 from mazedata import MazeData
 from menu import MenuScreen, GameState, HighScoreScreen
+from sound import SoundManager
 
 
 # Main game controller class: handles setup, updates, input, collisions, and rendering
@@ -60,6 +61,9 @@ class GameController(object):
 
         # Flag to track if game has been initialized
         self.game_initialized = False
+
+        self.sound_manager = SoundManager(base_path)
+        self.pellet_sound_toggle = 0
 
     # Restarts the game from level 0 with full lives after game over.
     def restart_game(self):
@@ -356,6 +360,13 @@ class GameController(object):
         if pellet:
             self.pellets.numEaten += 1
             self.update_score(pellet.points)
+
+            # Alternate between "wa" and "ka" sounds
+            if self.pellet_sound_toggle % 2 == 0:
+                self.sound_manager.play("wa")
+            else:
+                self.sound_manager.play("ka")
+            self.pellet_sound_toggle += 1
 
             if self.pellets.numEaten == 30:
                 self.ghosts.inky.startNode.allow_access(RIGHT, self.ghosts.inky)
