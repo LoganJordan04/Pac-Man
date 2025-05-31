@@ -96,6 +96,12 @@ class GameController(object):
         self.pause.paused = True
         self.start_game()
         self.textgroup.update_level(self.level)
+        self.textgroup.show_text(READYTXT)
+
+        # Pause when restarting
+        self.pause.timer = 0
+        self.pause.pauseTime = 3
+        self.pause.func = self.show_entities
 
     # Builds the background surface for the maze.
     # Loads the maze layout and rotation files, constructs the tilemap.
@@ -116,11 +122,13 @@ class GameController(object):
     # Loads the maze from file, places all entities, and sets up portals and ghost house.
     def start_game(self):
         self.mazedata.load_maze(self.level)
-        self.mazesprites = MazeSprites(self.mazedata.obj.name + ".txt", self.mazedata.obj.name + "_rotation.txt")
+        mazepath = os.path.join(base_path, "assets", "mazes", self.mazedata.obj.name + ".txt")
+        rotpath = os.path.join(base_path, "assets", "mazes", self.mazedata.obj.name + "_rotation.txt")
+        self.mazesprites = MazeSprites(mazepath, rotpath)
         self.set_background()
 
         # Load maze layout and create graph of nodes
-        self.nodes = NodeGroup(self.mazedata.obj.name+".txt")
+        self.nodes = NodeGroup(mazepath)
 
         # Link left and right edge nodes as teleport portals
         self.mazedata.obj.set_portal_pairs(self.nodes)
@@ -132,7 +140,7 @@ class GameController(object):
         self.pacman = Pacman(self.nodes.get_node_from_tiles(*self.mazedata.obj.pacmanStart))
 
         # Load pellets based on maze layout
-        self.pellets = PelletGroup(self.mazedata.obj.name+".txt")
+        self.pellets = PelletGroup(mazepath)
 
         # Initialize all four ghosts and assign starting positions
         self.ghosts = GhostGroup(self.nodes.get_start_temp_node(), self.pacman)

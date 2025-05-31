@@ -1,4 +1,5 @@
 import pygame
+import os
 from constants import *
 import numpy as np
 from animation import Animator
@@ -15,7 +16,8 @@ DEATH = 5
 class Spritesheet(object):
     def __init__(self):
         # Load the spritesheet image file
-        self.sheet = pygame.image.load("spritesheet.png").convert()
+        spritesheet_path = os.path.join(base_path, "assets", "images", "spritesheet.png")
+        self.sheet = pygame.image.load(spritesheet_path).convert()
 
         # Set transparency color to top-left pixel
         transcolor = self.sheet.get_at((0, 0))

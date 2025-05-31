@@ -1,4 +1,5 @@
 import pygame
+import os
 from vector import Vector2
 from constants import *
 
@@ -21,7 +22,8 @@ class Text(object):
 
     # Loads a font file at the given path with the configured size
     def setup_font(self, fontpath):
-        self.font = pygame.font.Font(fontpath, self.size)
+        font_path = os.path.join(base_path, "assets", "fonts", fontpath)
+        self.font = pygame.font.Font(font_path, self.size)
 
     # Renders the text string into a Pygame surface
     def create_label(self):

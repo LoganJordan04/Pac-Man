@@ -1,3 +1,6 @@
+import os
+
+
 TILEWIDTH = 16
 TILEHEIGHT = 16
 NROWS = 36
@@ -14,8 +17,6 @@ PINK = (255,100,150)
 TEAL = (100,255,255)
 ORANGE = (230,190,40)
 GREEN = (0, 255, 0)
-
-# Temp color
 DARK_GRAY = (45, 45, 45)
 
 STOP = 0
@@ -47,3 +48,6 @@ LEVELTXT = 1
 READYTXT = 2
 PAUSETXT = 3
 GAMEOVERTXT = 4
+
+# Base path for correctly reading files
+base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

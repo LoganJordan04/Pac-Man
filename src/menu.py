@@ -9,7 +9,7 @@ from sprites import Spritesheet
 
 
 class HighScore:
-    def __init__(self, filename="highscore.json"):
+    def __init__(self, filename=os.path.join(base_path, "data", "highscore.json")):
         self.filename = filename
         self.high_score = self.load_high_score()
 
@@ -59,7 +59,7 @@ class MenuScreen:
         # Load the spritesheet once so we can render the ghosts
         self.spritesheet = Spritesheet()
 
-        logo_path = os.path.join(os.path.dirname(__file__), "logo.png")
+        logo_path = os.path.join(base_path, "assets", "images", "logo.png")
         self.logo_image = pygame.image.load(logo_path).convert_alpha()
         logo_w = int(18 * TILEWIDTH)
         logo_h = int(4 * TILEHEIGHT)
