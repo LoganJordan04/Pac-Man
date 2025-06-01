@@ -163,6 +163,10 @@ class GameController(object):
         self.ghosts.clyde.startNode.deny_access(LEFT, self.ghosts.clyde)
         self.mazedata.obj.deny_ghosts_access(self.ghosts, self.nodes)
 
+        # Give each ghost access to the SoundManager
+        for ghost in self.ghosts:
+            ghost.sound_manager = self.sound_manager
+
         self.game_initialized = True
 
     # Runs once per frame. Updates game state, handles events, checks collisions,
@@ -300,6 +304,9 @@ class GameController(object):
                     self.pause.set_pause(pauseTime=1, func=self.show_entities)
                     ghost.start_spawn()
                     self.nodes.allow_home_access(ghost)
+                    self.sound_manager.play("eat_ghost")
+                    self.sound_manager.stop_looping("freight")
+                    self.sound_manager.play_looping("eyes")
 
                 elif ghost.mode.current is not SPAWN:
                     if self.pacman.alive:
@@ -353,6 +360,7 @@ class GameController(object):
             if self.pacman.collide_check(self.fruit):
                 self.update_score(self.fruit.points)
                 self.textgroup.add_text(str(self.fruit.points), WHITE, self.fruit.position.x, self.fruit.position.y, 8, time=1)
+                self.sound_manager.play("eat_fruit")
 
                 # Capturing the fruit
                 fruitCaptured = False

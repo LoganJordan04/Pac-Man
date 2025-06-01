@@ -13,7 +13,10 @@ class SoundManager:
             "ka": self.load_sound(base_path, "ka.wav", 0.5),
             "siren": self.load_sound(base_path, "siren.wav", 0.4),
             "freight": self.load_sound(base_path, "freight.wav", 0.3),
+            "eyes": self.load_sound(base_path, "eyes.wav", 0.4),
             "start": self.load_sound(base_path, "start.wav", 0.5),
+            "eat_fruit": self.load_sound(base_path, "eat_fruit.wav", 0.5),
+            "eat_ghost": self.load_sound(base_path, "eat_ghost.wav", 0.5),
         }
 
         # Set channels for looping sound effects
