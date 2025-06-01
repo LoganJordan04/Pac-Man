@@ -7,26 +7,25 @@ class SoundManager:
     def __init__(self, base_path):
         pygame.mixer.init()
 
-        # Load sounds into a dictionary for easy access by name
+        # Define sounds with their filename and volume
         self.sounds = {
-            "wa": self.load_sound(base_path, "wa.wav"),
-            "ka": self.load_sound(base_path, "ka.wav"),
-            # "eat_ghost": self.load_sound(base_path, "eat_ghost.wav"),
-            # "death": self.load_sound(base_path, "death.wav"),
-            # "fruit": self.load_sound(base_path, "eat_fruit.wav"),
-            # "power_pellet": self.load_sound(base_path, "power_pellet.wav"),
-            # "start": self.load_sound(base_path, "start.wav"),
+            "wa": self.load_sound(base_path, "wa.wav", 0.5),
+            "ka": self.load_sound(base_path, "ka.wav", 0.5),
+            "siren": self.load_sound(base_path, "siren.wav", 0.4),
+            "freight": self.load_sound(base_path, "freight.wav", 0.3),
+            "start": self.load_sound(base_path, "start.wav", 0.5),
         }
 
-        # Set common volume level
-        for sound in self.sounds.values():
-            sound.set_volume(0.5)
+        # Set channels for looping sound effects
+        self.looping_channels = {}
 
-    # Load an individual sound file given its filename
-    def load_sound(self, base_path, filename):
+    # Load an individual sound file given its filename and set its volume
+    def load_sound(self, base_path, filename, volume):
         path = os.path.join(base_path, "assets", "sounds", filename)
         if os.path.exists(path):
-            return pygame.mixer.Sound(path)
+            sound = pygame.mixer.Sound(path)
+            sound.set_volume(volume)
+            return sound
         return None
 
     # Play a sound by its key name (e.g., "wa", "ka")
@@ -34,3 +33,17 @@ class SoundManager:
         sound = self.sounds.get(name)
         if sound:
             sound.play()
+
+    # Play a looping sound (siren and freight)
+    def play_looping(self, name):
+        sound = self.sounds.get(name)
+        if sound:
+            channel = self.looping_channels.get(name)
+            if not channel or not channel.get_busy():
+                self.looping_channels[name] = sound.play(loops=-1)
+
+    def stop_looping(self, name):
+        channel = self.looping_channels.get(name)
+        if channel:
+            channel.stop()
+            self.looping_channels[name] = None

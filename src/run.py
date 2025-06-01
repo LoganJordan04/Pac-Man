@@ -165,6 +165,8 @@ class GameController(object):
 
         self.game_initialized = True
 
+        self.sound_manager.play("start")
+
     # Runs once per frame. Updates game state, handles events, checks collisions,
     # and draws everything to the screen.
     def update(self):
@@ -299,6 +301,7 @@ class GameController(object):
                     self.pause.set_pause(pauseTime=1, func=self.show_entities)
                     ghost.start_spawn()
                     self.nodes.allow_home_access(ghost)
+
                 elif ghost.mode.current is not SPAWN:
                     if self.pacman.alive:
                         self.lives -= 1
@@ -310,6 +313,19 @@ class GameController(object):
                             self.end_game()
                         else:
                             self.pause.set_pause(pauseTime=3, func=self.reset_level)
+
+        if self.pacman.alive:
+            # Play the freight sound and stop the siren sound when in freight mode and vice versa
+            if ghost.mode.current is FREIGHT:
+                self.sound_manager.stop_looping("siren")
+                self.sound_manager.play_looping("freight")
+            else:
+                self.sound_manager.play_looping("siren")
+                self.sound_manager.stop_looping("freight")
+        else:
+            # Stop the looping sounds when pacman dies
+            self.sound_manager.stop_looping("siren")
+            self.sound_manager.stop_looping("freight")
 
     # Handle game over logic
     def end_game(self):
