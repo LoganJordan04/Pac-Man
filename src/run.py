@@ -165,8 +165,6 @@ class GameController(object):
 
         self.game_initialized = True
 
-        self.sound_manager.play("start")
-
     # Runs once per frame. Updates game state, handles events, checks collisions,
     # and draws everything to the screen.
     def update(self):
@@ -263,9 +261,10 @@ class GameController(object):
                         self.textgroup.show_text(READYTXT)
                         self.hide_entities()
 
-                        # Set up a 3-second timed pause
+                        # Set up the inital start sound and 5 second pause
+                        self.sound_manager.play("start")
                         self.pause.timer = 0
-                        self.pause.pauseTime = 3
+                        self.pause.pauseTime = 4.25
                         self.pause.func = self.show_entities
                         self.pause.paused = True
 
