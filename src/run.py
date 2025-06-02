@@ -72,6 +72,12 @@ class GameController(object):
         self.pause.paused = True
         self.fruit = None
         self.fruitCaptured = []
+
+        # Stop all looping sounds when restarting the game
+        self.sound_manager.stop_looping("siren")
+        self.sound_manager.stop_looping("freight")
+        self.sound_manager.stop_looping("eyes")
+
         self.start_game()
         self.score = 0
         self.textgroup.update_score(self.score)
@@ -98,6 +104,12 @@ class GameController(object):
         self.show_entities()
         self.level += 1
         self.pause.paused = True
+
+        # Stop all looping sounds when advancing to next level
+        self.sound_manager.stop_looping("siren")
+        self.sound_manager.stop_looping("freight")
+        self.sound_manager.stop_looping("eyes")
+
         self.start_game()
         self.textgroup.update_level(self.level)
         self.textgroup.show_text(READYTXT)
@@ -318,7 +330,8 @@ class GameController(object):
                         else:
                             self.pause.set_pause(pauseTime=3, func=self.reset_level)
 
-        if self.pacman.alive:
+        if self.pacman.alive and not self.flashBG:
+            # Only manage background sounds when not flashing (level complete)
             # Determine what background sound to play based on ghost states
             any_spawn = any(ghost.mode.current is SPAWN for ghost in self.ghosts)
             any_freight = any(ghost.mode.current is FREIGHT for ghost in self.ghosts)
@@ -338,8 +351,9 @@ class GameController(object):
                 self.sound_manager.stop_looping("freight")
                 self.sound_manager.stop_looping("eyes")
                 self.sound_manager.play_looping("siren")
-        else:
-            # Stop all looping sounds when pacman dies
+
+        elif self.flashBG or not self.pacman.alive:
+            # Stop all looping sounds when level complete or pacman dies
             self.sound_manager.stop_looping("siren")
             self.sound_manager.stop_looping("freight")
             self.sound_manager.stop_looping("eyes")
