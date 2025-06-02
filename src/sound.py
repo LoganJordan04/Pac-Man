@@ -18,6 +18,7 @@ class SoundManager:
             "start": self.load_sound(base_path, "start.wav", 0.5),
             "eat_fruit": self.load_sound(base_path, "eat_fruit.wav", 0.5),
             "eat_ghost": self.load_sound(base_path, "eat_ghost.wav", 0.5),
+            "highscore": self.load_sound(base_path, "highscore.wav", 0.5)
         }
 
         # Set channels for looping sound effects
