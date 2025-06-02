@@ -209,6 +209,7 @@ class GameController(object):
             # High score screen finished, return to menu
             self.game_state.set_state(GameState.MENU)
             self.high_score_screen = None
+            self.menu_screen.refresh_high_score_display()
 
     # Update game logic
     def update_game(self, dt):
@@ -299,7 +300,6 @@ class GameController(object):
                         self.game_state.set_state(GameState.MENU)
 
                 elif self.game_state.is_high_score():
-                    self.sound_manager.play("highscore")
                     # Skip high score screen on any key press
                     self.game_state.set_state(GameState.MENU)
                     self.high_score_screen = None
@@ -363,21 +363,21 @@ class GameController(object):
 
     # Handle game over logic
     def end_game(self):
-        # Check if it's a new high score
+        self.textgroup.show_text(GAMEOVERTXT)
+
+        # Player achieved a new high score
         if self.menu_screen.update_high_score(self.score):
-            # New high score
-            self.high_score_screen = HighScoreScreen(self.screen, self.score)
-            self.game_state.set_state(GameState.HIGH_SCORE)
             self.pause.set_pause(pauseTime=3, func=self.show_high_score_screen)
         else:
-            # Regular game over
-            self.textgroup.show_text(GAMEOVERTXT)
+            # No high score, just return to menu
             self.pause.set_pause(pauseTime=3, func=self.return_to_menu)
 
     # Clear game over text and show the high score screen
     def show_high_score_screen(self):
         self.textgroup.hide_text()
+        self.high_score_screen = HighScoreScreen(self.screen, self.score)
         self.game_state.set_state(GameState.HIGH_SCORE)
+        self.sound_manager.play("highscore")
 
     # Return to the main menu
     def return_to_menu(self):

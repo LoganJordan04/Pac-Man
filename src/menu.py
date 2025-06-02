@@ -203,7 +203,8 @@ class HighScoreScreen:
         self.screen = screen
         self.new_score = new_score
         self.timer = 0
-        self.display_time = 3.0  # Show for 3 seconds
+        # Show for 6 seconds
+        self.display_time = 6
         self.setup_text()
 
     def setup_text(self):
