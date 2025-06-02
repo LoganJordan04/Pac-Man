@@ -43,6 +43,9 @@ class ModeController(object):
         self.timer = 0
         self.time = None
 
+        # Duration of frightened state
+        self.freightTime = 7
+
         # Base scatter/chase timer logic
         self.mainmode = MainMode()
 
@@ -87,10 +90,7 @@ class ModeController(object):
     def set_freight_mode(self):
         if self.current in [SCATTER, CHASE]:
             self.timer = 0
-
-            # Duration of frightened state
-            self.time = 7
-
+            self.time = self.freightTime
             self.current = FREIGHT
         elif self.current is FREIGHT:
             # Restart the fright timer if already in frightened mode

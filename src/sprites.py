@@ -124,8 +124,19 @@ class GhostSprites(Spritesheet):
             elif self.entity.direction == UP:
                 self.entity.image = self.get_image(x, 4)
 
+
         elif self.entity.mode.current == FREIGHT:
-            self.entity.image = self.get_image(10, 4)
+            # Flashing starts when freight mode is almost over
+            if self.entity.mode.timer >= self.entity.mode.time - 2:
+                # Alternate between blue and white every 0.2s
+                if int(self.entity.mode.timer * 5) % 2 == 0:
+                    # Blue
+                    self.entity.image = self.get_image(10, 4)
+                else:
+                    # White
+                    self.entity.image = self.get_image(10, 6)
+            else:
+                self.entity.image = self.get_image(10, 4)
 
         elif self.entity.mode.current == SPAWN:
             if self.entity.direction == LEFT:

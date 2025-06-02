@@ -130,6 +130,11 @@ class MenuScreen:
             self.texts[2].set_text(str(self.high_score_manager.get_high_score()).zfill(8))
         return new_record
 
+    def refresh_high_score_display(self):
+        new_score = self.high_score_manager.get_high_score()
+        # Update the high score text (it's at index 2 in self.texts)
+        self.texts[2].set_text(str(new_score).zfill(8))
+
     # Render the menu screen
     def render(self):
         # Clear screen with black

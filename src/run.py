@@ -297,7 +297,9 @@ class GameController(object):
                     elif event.key == K_ESCAPE:
                         # Return to menu
                         self.game_state.set_state(GameState.MENU)
+
                 elif self.game_state.is_high_score():
+                    self.sound_manager.play("highscore")
                     # Skip high score screen on any key press
                     self.game_state.set_state(GameState.MENU)
                     self.high_score_screen = None
@@ -324,6 +326,7 @@ class GameController(object):
                         self.lifesprites.remove_image()
                         self.pacman.die()
                         self.ghosts.hide()
+                        self.sound_manager.play("death")
                         if self.lives <= 0:
                             # Game over - check for high score
                             self.end_game()
@@ -365,13 +368,20 @@ class GameController(object):
             # New high score
             self.high_score_screen = HighScoreScreen(self.screen, self.score)
             self.game_state.set_state(GameState.HIGH_SCORE)
+            self.pause.set_pause(pauseTime=3, func=self.show_high_score_screen)
         else:
             # Regular game over
             self.textgroup.show_text(GAMEOVERTXT)
             self.pause.set_pause(pauseTime=3, func=self.return_to_menu)
 
+    # Clear game over text and show the high score screen
+    def show_high_score_screen(self):
+        self.textgroup.hide_text()
+        self.game_state.set_state(GameState.HIGH_SCORE)
+
     # Return to the main menu
     def return_to_menu(self):
+        self.menu_screen.refresh_high_score_display()
         self.game_state.set_state(GameState.MENU)
 
     # Controls fruit appearance and collision with Pac-Man.
