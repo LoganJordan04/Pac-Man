@@ -209,6 +209,7 @@ class GameController(object):
             # High score screen finished, return to menu
             self.game_state.set_state(GameState.MENU)
             self.high_score_screen = None
+            self.menu_screen.refresh_high_score_display()
 
     # Update game logic
     def update_game(self, dt):
@@ -277,7 +278,7 @@ class GameController(object):
                         self.textgroup.show_text(READYTXT)
                         self.hide_entities()
 
-                        # Set up the inital start sound and 5 second pause
+                        # Set up the initial start sound and 5 second pause
                         self.sound_manager.play("start")
                         self.pause.timer = 0
                         self.pause.pauseTime = 4.25
@@ -288,6 +289,7 @@ class GameController(object):
                     if event.key == K_SPACE:
                         if self.pacman.alive:
                             self.pause.set_pause(playerPaused=True)
+                            self.sound_manager.stop_all()
                             if not self.pause.paused:
                                 self.textgroup.hide_text()
                                 self.show_entities()
@@ -299,7 +301,6 @@ class GameController(object):
                         self.game_state.set_state(GameState.MENU)
 
                 elif self.game_state.is_high_score():
-                    self.sound_manager.play("highscore")
                     # Skip high score screen on any key press
                     self.game_state.set_state(GameState.MENU)
                     self.high_score_screen = None
@@ -363,21 +364,21 @@ class GameController(object):
 
     # Handle game over logic
     def end_game(self):
-        # Check if it's a new high score
+        self.textgroup.show_text(GAMEOVERTXT)
+
+        # Player achieved a new high score
         if self.menu_screen.update_high_score(self.score):
-            # New high score
-            self.high_score_screen = HighScoreScreen(self.screen, self.score)
-            self.game_state.set_state(GameState.HIGH_SCORE)
             self.pause.set_pause(pauseTime=3, func=self.show_high_score_screen)
         else:
-            # Regular game over
-            self.textgroup.show_text(GAMEOVERTXT)
+            # No high score, just return to menu
             self.pause.set_pause(pauseTime=3, func=self.return_to_menu)
 
     # Clear game over text and show the high score screen
     def show_high_score_screen(self):
         self.textgroup.hide_text()
+        self.high_score_screen = HighScoreScreen(self.screen, self.score)
         self.game_state.set_state(GameState.HIGH_SCORE)
+        self.sound_manager.play("highscore")
 
     # Return to the main menu
     def return_to_menu(self):

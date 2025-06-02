@@ -100,7 +100,8 @@ class MenuScreen:
 
         high_score = self.high_score_manager.get_high_score()
         self.texts.append(Text("HIGH SCORE", WHITE, 9 * TILEWIDTH, 24 * TILEHEIGHT, TILEHEIGHT))
-        self.texts.append(Text(str(high_score).zfill(8), WHITE, 10 * TILEWIDTH, 25.25 * TILEHEIGHT, TILEHEIGHT))
+        self.high_score_text = Text(str(high_score).zfill(8), WHITE, 10 * TILEWIDTH, 25.25 * TILEHEIGHT, TILEHEIGHT)
+        self.texts.append(self.high_score_text)
 
         self.start_text = Text(
             "PRESS SPACEBAR", YELLOW, 5.75 * TILEWIDTH, 29 * TILEHEIGHT, int(TILEHEIGHT * 1.2)
@@ -127,13 +128,12 @@ class MenuScreen:
     def update_high_score(self, score):
         new_record = self.high_score_manager.save_high_score(score)
         if new_record:
-            self.texts[2].set_text(str(self.high_score_manager.get_high_score()).zfill(8))
+            self.high_score_text.set_text(str(self.high_score_manager.get_high_score()).zfill(8))
         return new_record
 
     def refresh_high_score_display(self):
         new_score = self.high_score_manager.get_high_score()
-        # Update the high score text (it's at index 2 in self.texts)
-        self.texts[2].set_text(str(new_score).zfill(8))
+        self.high_score_text.set_text(str(new_score).zfill(8))
 
     # Render the menu screen
     def render(self):
@@ -203,7 +203,8 @@ class HighScoreScreen:
         self.screen = screen
         self.new_score = new_score
         self.timer = 0
-        self.display_time = 3.0  # Show for 3 seconds
+        # Show for 6 seconds
+        self.display_time = 6
         self.setup_text()
 
     def setup_text(self):
