@@ -11,6 +11,7 @@ class SoundManager:
         self.sounds = {
             "wa": self.load_sound(base_path, "wa.wav", 0.5),
             "ka": self.load_sound(base_path, "ka.wav", 0.5),
+            "death": self.load_sound(base_path, "death.wav", 0.5),
             "siren": self.load_sound(base_path, "siren.wav", 0.4),
             "freight": self.load_sound(base_path, "freight.wav", 0.3),
             "eyes": self.load_sound(base_path, "eyes.wav", 0.4),

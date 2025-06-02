@@ -324,6 +324,7 @@ class GameController(object):
                         self.lifesprites.remove_image()
                         self.pacman.die()
                         self.ghosts.hide()
+                        self.sound_manager.play("death")
                         if self.lives <= 0:
                             # Game over - check for high score
                             self.end_game()
