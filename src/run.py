@@ -12,6 +12,7 @@ from sprites import LifeSprites
 from sprites import MazeSprites
 from mazedata import MazeData
 from menu import MenuScreen, GameState, HighScoreScreen
+from sound import SoundManager
 
 
 # Main game controller class: handles setup, updates, input, collisions, and rendering
@@ -60,6 +61,9 @@ class GameController(object):
 
         # Flag to track if game has been initialized
         self.game_initialized = False
+
+        self.sound_manager = SoundManager(base_path)
+        self.pellet_sound_toggle = 0
 
     # Restarts the game from level 0 with full lives after game over.
     def restart_game(self):
@@ -159,6 +163,10 @@ class GameController(object):
         self.ghosts.clyde.startNode.deny_access(LEFT, self.ghosts.clyde)
         self.mazedata.obj.deny_ghosts_access(self.ghosts, self.nodes)
 
+        # Give each ghost access to the SoundManager
+        for ghost in self.ghosts:
+            ghost.sound_manager = self.sound_manager
+
         self.game_initialized = True
 
     # Runs once per frame. Updates game state, handles events, checks collisions,
@@ -257,9 +265,10 @@ class GameController(object):
                         self.textgroup.show_text(READYTXT)
                         self.hide_entities()
 
-                        # Set up a 3-second timed pause
+                        # Set up the inital start sound and 5 second pause
+                        self.sound_manager.play("start")
                         self.pause.timer = 0
-                        self.pause.pauseTime = 3
+                        self.pause.pauseTime = 4.25
                         self.pause.func = self.show_entities
                         self.pause.paused = True
 
@@ -295,6 +304,11 @@ class GameController(object):
                     self.pause.set_pause(pauseTime=1, func=self.show_entities)
                     ghost.start_spawn()
                     self.nodes.allow_home_access(ghost)
+                    self.sound_manager.play("eat_ghost")
+                    self.sound_manager.stop_looping("freight")
+                    self.sound_manager.stop_looping("siren")
+                    self.sound_manager.play_looping("eyes")
+
                 elif ghost.mode.current is not SPAWN:
                     if self.pacman.alive:
                         self.lives -= 1
@@ -306,6 +320,19 @@ class GameController(object):
                             self.end_game()
                         else:
                             self.pause.set_pause(pauseTime=3, func=self.reset_level)
+
+        if self.pacman.alive:
+            # Play the freight sound and stop the siren sound when in freight mode and vice versa
+            if ghost.mode.current is FREIGHT:
+                self.sound_manager.stop_looping("siren")
+                self.sound_manager.play_looping("freight")
+            else:
+                self.sound_manager.play_looping("siren")
+                self.sound_manager.stop_looping("freight")
+        else:
+            # Stop the looping sounds when pacman dies
+            self.sound_manager.stop_looping("siren")
+            self.sound_manager.stop_looping("freight")
 
     # Handle game over logic
     def end_game(self):
@@ -334,6 +361,7 @@ class GameController(object):
             if self.pacman.collide_check(self.fruit):
                 self.update_score(self.fruit.points)
                 self.textgroup.add_text(str(self.fruit.points), WHITE, self.fruit.position.x, self.fruit.position.y, 8, time=1)
+                self.sound_manager.play("eat_fruit")
 
                 # Capturing the fruit
                 fruitCaptured = False
@@ -356,6 +384,13 @@ class GameController(object):
         if pellet:
             self.pellets.numEaten += 1
             self.update_score(pellet.points)
+
+            # Alternate between "wa" and "ka" sounds
+            if self.pellet_sound_toggle % 2 == 0:
+                self.sound_manager.play("wa")
+            else:
+                self.sound_manager.play("ka")
+            self.pellet_sound_toggle += 1
 
             if self.pellets.numEaten == 30:
                 self.ghosts.inky.startNode.allow_access(RIGHT, self.ghosts.inky)

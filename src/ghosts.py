@@ -1,5 +1,3 @@
-import pygame
-from pygame.locals import *
 from vector import Vector2
 from constants import *
 from entity import Entity
@@ -29,6 +27,7 @@ class Ghost(Entity):
 
         # Controls modes
         self.mode = ModeController(self)
+        self.last_mode = self.mode.current
 
         # Starting position of the ghost
         self.homeNode = node
@@ -62,6 +61,11 @@ class Ghost(Entity):
         # Handle timing and transitions between modes
         self.mode.update(dt)
 
+        # Stop eyes sound when ghost leaves spawn mode
+        if self.last_mode == SPAWN and self.mode.current != SPAWN:
+            if hasattr(self, "sound_manager") and self.sound_manager:
+                self.sound_manager.stop_looping("eyes")
+
         if self.mode.current is SCATTER:
             self.scatter()
         elif self.mode.current is CHASE:
@@ -69,6 +73,7 @@ class Ghost(Entity):
 
         # Apply standard movement logic from Entity
         super().update(dt)
+        self.last_mode = self.mode.current
 
     # Scatter mode: ghost retreats to its corner or default location.
     def scatter(self):
