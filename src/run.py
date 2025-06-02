@@ -23,7 +23,7 @@ class GameController(object):
         # Create the main display surface using screen size defined in constants.py
         self.screen = pygame.display.set_mode(SCREENSIZE, 0, 32)
         pygame.display.set_caption("PAC-MEN")
-
+ 
         # Sets the default maze background
         self.background = None
         self.background_norm = None
@@ -305,9 +305,6 @@ class GameController(object):
                     ghost.start_spawn()
                     self.nodes.allow_home_access(ghost)
                     self.sound_manager.play("eat_ghost")
-                    self.sound_manager.stop_looping("freight")
-                    self.sound_manager.stop_looping("siren")
-                    self.sound_manager.play_looping("eyes")
 
                 elif ghost.mode.current is not SPAWN:
                     if self.pacman.alive:
@@ -322,17 +319,30 @@ class GameController(object):
                             self.pause.set_pause(pauseTime=3, func=self.reset_level)
 
         if self.pacman.alive:
-            # Play the freight sound and stop the siren sound when in freight mode and vice versa
-            if ghost.mode.current is FREIGHT:
+            # Determine what background sound to play based on ghost states
+            any_spawn = any(ghost.mode.current is SPAWN for ghost in self.ghosts)
+            any_freight = any(ghost.mode.current is FREIGHT for ghost in self.ghosts)
+
+            if any_spawn:
+                # Eyes sound takes priority when any ghost is returning home
                 self.sound_manager.stop_looping("siren")
+                self.sound_manager.stop_looping("freight")
+                self.sound_manager.play_looping("eyes")
+            elif any_freight:
+                # Freight sound when ghosts are vulnerable
+                self.sound_manager.stop_looping("siren")
+                self.sound_manager.stop_looping("eyes")
                 self.sound_manager.play_looping("freight")
             else:
-                self.sound_manager.play_looping("siren")
+                # Default siren sound
                 self.sound_manager.stop_looping("freight")
+                self.sound_manager.stop_looping("eyes")
+                self.sound_manager.play_looping("siren")
         else:
-            # Stop the looping sounds when pacman dies
+            # Stop all looping sounds when pacman dies
             self.sound_manager.stop_looping("siren")
             self.sound_manager.stop_looping("freight")
+            self.sound_manager.stop_looping("eyes")
 
     # Handle game over logic
     def end_game(self):
