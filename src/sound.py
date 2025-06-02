@@ -40,10 +40,24 @@ class SoundManager:
     # Play a looping sound (siren and freight)
     def play_looping(self, name):
         sound = self.sounds.get(name)
-        if sound:
-            channel = self.looping_channels.get(name)
-            if not channel or not channel.get_busy():
-                self.looping_channels[name] = sound.play(loops=-1)
+        if not sound:
+            return
+
+        # If already playing, do nothing
+        channel = self.looping_channels.get(name)
+        if channel and channel.get_busy():
+            return
+
+        # Stop all other looping sounds
+        for key in list(self.looping_channels.keys()):
+            if key != name:
+                self.stop_looping(key)
+
+        # Start this sound
+        channel = pygame.mixer.find_channel()
+        if channel:
+            channel.play(sound, loops=-1)
+            self.looping_channels[name] = channel
 
     def stop_looping(self, name):
         channel = self.looping_channels.get(name)

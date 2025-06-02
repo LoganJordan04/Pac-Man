@@ -306,6 +306,7 @@ class GameController(object):
                     self.nodes.allow_home_access(ghost)
                     self.sound_manager.play("eat_ghost")
                     self.sound_manager.stop_looping("freight")
+                    self.sound_manager.stop_looping("siren")
                     self.sound_manager.play_looping("eyes")
 
                 elif ghost.mode.current is not SPAWN:
