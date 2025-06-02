@@ -66,3 +66,11 @@ class SoundManager:
         if channel:
             channel.stop()
             self.looping_channels[name] = None
+
+    def stop_all(self):
+        # Stop all looping sounds
+        for name in list(self.looping_channels.keys()):
+            self.stop_looping(name)
+
+        # Also stop any one-shot sounds
+        pygame.mixer.stop()

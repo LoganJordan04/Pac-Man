@@ -278,7 +278,7 @@ class GameController(object):
                         self.textgroup.show_text(READYTXT)
                         self.hide_entities()
 
-                        # Set up the inital start sound and 5 second pause
+                        # Set up the initial start sound and 5 second pause
                         self.sound_manager.play("start")
                         self.pause.timer = 0
                         self.pause.pauseTime = 4.25
@@ -289,6 +289,7 @@ class GameController(object):
                     if event.key == K_SPACE:
                         if self.pacman.alive:
                             self.pause.set_pause(playerPaused=True)
+                            self.sound_manager.stop_all()
                             if not self.pause.paused:
                                 self.textgroup.hide_text()
                                 self.show_entities()
